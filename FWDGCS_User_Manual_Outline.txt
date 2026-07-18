@@ -1,0 +1,451 @@
+================================================================================
+                 FWDGCS v2 — User Manual Outline
+                 (Custom QGroundControl for Navy Operations)
+================================================================================
+
+Document Version: 1.0
+Project:         FWDGCSv2 (FWD_NAVY_GCS)
+Base:            QGroundControl (QGC)
+Author:          FWD Defence Team
+Last Updated:    May 2026
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+    1.  Introduction
+    2.  System Requirements
+    3.  Installation Guide
+    4.  First Launch & Login
+    5.  User Interface Overview
+    6.  Vehicle Connection
+    7.  Fly View (Flight Operations)
+    8.  Video System
+    9.  Mission Planning (Plan View)
+    10. Vehicle Setup (Setup View)
+    11. Application Settings
+    12. Safety Parameters
+    13. Data Persistence & Logs
+    14. Troubleshooting & FAQ
+    15. Appendix
+
+================================================================================
+SECTION DETAILS
+================================================================================
+
+---
+
+1. INTRODUCTION
+   1.1  About FWDGCS
+        - Purpose of the software
+        - Key capabilities (mission planning, live video, telemetry)
+        - Who it is for (Navy/maritime operators)
+   1.2  What Makes FWDGCS Different from Standard QGC
+        - Custom login/authentication system
+        - Enhanced video controls
+        - FWD branding and UI theme
+   1.3  Document Scope & Audience
+   1.4  How to Use This Manual
+   1.5  Related Documentation
+
+---
+
+2. SYSTEM REQUIREMENTS
+   2.1  Supported Operating Systems
+        - Windows 10/11
+        - Ubuntu 20.04 / 22.04 LTS
+        - Android (tablets)
+        - macOS (if applicable)
+   2.2  Minimum Hardware Specifications
+        - Processor, RAM, disk space
+        - Graphics requirements (for video rendering)
+        - Network (Wi-Fi, Ethernet)
+   2.3  Supported Vehicles & Autopilots
+        - ArduPilot (APM)
+        - PX4 Pro
+        - MAVLink protocol compatibility
+   2.4  Required Drivers & Dependencies
+        - GStreamer 1.18.6 (video pipeline)
+        - USB-to-serial drivers (FTDI, CP210x)
+        - Radio telemetry drivers (SiK, Holybro)
+
+---
+
+3. INSTALLATION GUIDE
+   3.1  Windows Installation
+        - Downloading the installer
+        - Running the setup wizard
+        - Post-installation steps
+   3.2  Linux Installation
+        - Installing via AppImage
+        - Installing from source (for developers)
+        - Setting up udev rules for telemetry radios
+   3.3  Android Installation
+        - Installing the APK
+        - Permissions required (USB, location, storage)
+   3.4  Verifying the Installation
+        - Launching the application
+        - Checking version information
+   3.5  Upgrading from a Previous Version
+        - Backup recommendations
+        - Migration of settings
+
+---
+
+4. FIRST LAUNCH & LOGIN
+   4.1  Starting FWDGCS for the First Time
+   4.2  The Login Screen
+        - FWD branding and visual elements
+        - Login form fields (username, password)
+        - "Remember Me" option
+        - Forgot password flow
+   4.3  Registration (if applicable)
+        - Creating a new account
+        - Required fields
+        - Account activation
+   4.4  Authentication Workflow
+        - How login validation works
+        - Session management
+        - Timeout and re-authentication
+   4.5  Logout
+        - How to log out
+        - What happens on logout (return to login screen)
+        - Checking active connections before logout
+   4.6  Login Troubleshooting
+        - Incorrect credentials
+        - Network/server unreachable (if server-side auth is enabled)
+        - Account locked/disabled
+
+---
+
+5. USER INTERFACE OVERVIEW
+   5.1  Main Window Layout
+        - Application window structure
+        - View selection (Fly, Plan, Setup, Analyze)
+   5.2  Main Toolbar
+        - FWD branding and colour theme (red #700000)
+        - Application logo
+        - Profile / user information
+        - Logout button
+        - Settings access
+        - Connection status indicator
+   5.3  Status Bar
+        - GPS status
+        - Battery voltage
+        - Telemetry signal strength (RSSI)
+        - Flight mode
+        - Armed status
+   5.4  Application Modes Overview
+        - Fly Mode
+        - Plan Mode
+        - Setup Mode
+        - Analyze Mode
+   5.5  Keyboard Shortcuts
+        - Navigation shortcuts
+        - Function-specific shortcuts (arm, return-to-launch, etc.)
+
+---
+
+6. VEHICLE CONNECTION
+   6.1  Connection Methods
+        - Serial telemetry radio
+        - USB direct connection
+        - UDP / TCP link
+        - WiFi bridge
+   6.2  Configuring a New Connection
+        - Opening the connection settings
+        - Selecting communication type
+        - Setting baud rate, port, and parameters
+   6.3  Connecting to a Vehicle
+        - Step-by-step connection procedure
+        - Expected behaviour on successful connection
+   6.4  Connection Status Indicators
+        - Green / yellow / red indicators
+        - Heartbeat monitoring
+        - Link quality and latency
+   6.5  Multiple Vehicle Support
+        - Connecting multiple vehicles (if supported)
+        - Switching between vehicles
+   6.6  Disconnecting
+        - Safe disconnect procedure
+        - What happens to active missions on disconnect
+
+---
+
+7. FLY VIEW (FLIGHT OPERATIONS)
+   7.1  Overview of the Fly View
+        - Primary flight instrument panel
+        - Map display
+        - Video overlay area
+   7.2  Artificial Horizon / Attitude Indicator
+        - Pitch and roll display
+        - Heading (compass) rose
+   7.3  Telemetry Data Display
+        - Altitude (barometric / GPS / relative)
+        - Airspeed / Groundspeed
+        - Battery status (voltage, current, remaining)
+        - GPS satellite count and HDOP
+        - Flight time
+        - Distance from home
+   7.4  Map Interaction
+        - Pan, zoom, and centre
+        - Satellite / hybrid / terrain views
+        - Vehicle position and trail
+        - Waypoint markers
+        - Geofence overlay
+   7.5  In-Flight Controls
+        - Arm / Disarm
+        - Takeoff
+        - Land
+        - Return to Launch (RTL)
+        - Pause
+        - Flight mode selection (Loiter, Auto, Stabilize, etc.)
+   7.6  Joystick / Gamepad Control (if supported)
+        - Setting up a joystick
+        - Calibration
+        - Mode mapping
+
+---
+
+8. VIDEO SYSTEM
+   8.1  Overview of Video Capabilities
+        - Supported video sources (camera, gimbal, IP stream)
+        - GStreamer 1.18.6 pipeline
+        - Video codec support (H.264, H.265, etc.)
+   8.2  Configuring Video Source
+        - Video settings panel
+        - RTSP / UDP / TCP source URL
+        - Camera device selection (USB, CSI)
+        - Video resolution and framerate
+   8.3  Video Controls
+        - Show / hide video panel
+        - Resize and reposition video
+        - Fullscreen toggle
+        - Right menu controls
+        - Snapshot (capture frame)
+        - Record video (if supported)
+   8.4  Video Overlays
+        - Telemetry data on video
+        - Crosshair / reticle
+        - Artificial horizon overlay
+   8.5  Video Troubleshooting
+        - No video feed
+        - Lag or stuttering
+        - GStreamer pipeline errors
+        - Codec compatibility issues
+   8.6  Video Settings Reference
+        - GStreamer pipeline string
+        - UDP port configuration
+        - Buffer size and latency settings
+
+---
+
+9. MISSION PLANNING (PLAN VIEW)
+   9.1  Overview of Plan View
+        - Mission creation workspace
+        - Map-based waypoint editing
+   9.2  Creating a New Mission
+        - Adding waypoints
+        - Setting waypoint altitude and loiter time
+        - Adding actions (takeoff, land, RTL, etc.)
+   9.3  Waypoint Types
+        - Waypoint
+        - Loiter (unlimited, time, turns)
+        - Land
+        - Takeoff
+        - Return to Launch
+        - Spline waypoint
+   9.4  Advanced Mission Commands
+        - Condition commands (delay, distance, yaw)
+        - DO commands (set servo, repeat servo, set relay)
+        - Camera trigger commands
+        - Gimbal commands
+   9.5  Geofence
+        - Defining a geofence boundary
+        - Action on breach (RTL, Land, etc.)
+        - Visual indicators on map
+   9.6  Rally Points
+        - Setting rally/alternate landing points
+        - Usage in RTL scenarios
+   9.7  Saving, Loading, and Exporting Missions
+        - File format (.mission, .plan, .waypoints)
+        - Loading missions from file
+        - Sharing missions with other operators
+   9.8  Uploading Mission to Vehicle
+        - Upload procedure
+        - Verification after upload
+        - In-flight mission modification (if supported)
+
+---
+
+10. VEHICLE SETUP (SETUP VIEW)
+   10.1 Overview of Setup View
+        - Summary / Status page
+        - Vehicle configuration sections
+   10.2 Firmware
+        - Checking current firmware version
+        - Updating firmware
+        - Installing custom firmware
+   10.3 Airframe
+        - Selecting vehicle type (quadcopter, plane, rover, boat)
+        - Parameter presets for common airframes
+   10.4 Sensors
+        - Accelerometer calibration
+        - Magnetometer (compass) calibration
+        - Gyroscope calibration
+        - Level / horizon calibration
+        - Airspeed calibration (for fixed-wing)
+   10.5 Radio Control (RC) Calibration
+        - RC transmitter binding
+        - Channel mapping
+        - Endpoint and trim calibration
+        - Failsafe settings
+   10.6 Flight Modes
+        - Assigning flight modes to RC channels
+        - Mode descriptions and recommendations
+   10.7 Power & Battery
+        - Battery monitor setup
+        - Voltage and current sensor calibration
+        - Low-battery failsafe thresholds
+   10.8 Motors
+        - Motor output mapping
+        - Motor test / spin (safety precautions)
+        - ESC calibration
+   10.9 Safety
+        - Arming checks
+        - Geofence failsafe
+        - Loss of signal failsafe
+        - Low battery failsafe
+
+---
+
+11. APPLICATION SETTINGS
+   11.1 General Settings
+        - Language / locale selection
+        - Units (metric / imperial)
+        - Map provider (Google, Bing, Mapbox, etc.)
+   11.2 Video Settings
+        - Video source configuration
+        - Recording settings
+        - GStreamer pipeline options
+   11.3 MAVLink Settings
+        - MAVLink protocol version (1 / 2)
+        - MAVLink forwarding
+        - Telemetry logging
+   11.4 Console / Debug Settings
+        - Enabling developer console
+        - Logging verbosity
+        - Saving debug logs
+   11.5 Branding & Display
+        - Application name display
+        - Custom logo / icon (FWD branding)
+   11.6 Offline Maps
+        - Downloading offline map tiles
+        - Managing offline map storage
+
+---
+
+12. SAFETY PARAMETERS
+   12.1 Overview of Safety Parameters
+        - Custom safety parameter UI
+        - Critical vs. warning thresholds
+   12.2 Arming Safety Checks
+        - Pre-arm requirements
+        - Bypassing arming checks (authorized only)
+   12.3 Failsafe Actions
+        - RC loss failsafe
+        - Telemetry loss failsafe
+        - Low battery failsafe
+        - Geofence breach failsafe
+        - Each failsafe: action (RTL, Land, Continue)
+   12.4 Return to Launch (RTL) Settings
+        - RTL altitude
+        - RTL behaviour (climb first, direct)
+   12.5 Emergency Procedures
+        - Kill switch
+        - Emergency motor stop
+        - Parachute deployment (if equipped)
+
+---
+
+13. DATA PERSISTENCE & LOGS
+   13.1 Where Data is Stored
+        - Configuration files location
+        - Telemetry logs
+        - Mission files
+        - Screenshots and recordings
+   13.2 Telemetry Logs
+        - Automatic logging
+        - Log file format (.tlog, .bin, .ulog)
+        - Viewing logs within the application
+        - Exporting logs for external analysis
+   13.3 Crash Reports
+        - Automatic crash reporting (if enabled)
+        - Sending crash reports to FWD team
+   13.4 Backup & Restore
+        - Backing up application settings
+        - Restoring from backup
+        - Migrating to a new computer
+
+---
+
+14. TROUBLESHOOTING & FAQ
+   14.1 Installation Issues
+        - Application fails to start
+        - Missing DLL / library errors
+        - Permission denied errors
+   14.2 Connection Issues
+        - "No heartbeat received"
+        - Serial port not detected
+        - Radio not communicating
+        - UDP/TCP connection refused
+   14.3 Video Issues
+        - Black screen / no video
+        - Video freezing or lagging
+        - GStreamer errors
+        - High CPU usage during video playback
+   14.4 Login Issues
+        - Cannot log in
+        - "Server unreachable" error
+        - Account locked
+        - Session expired
+   14.5 Mission Issues
+        - Upload failed
+        - Waypoints not accepted by vehicle
+        - Geofence breach warnings
+   14.6 General FAQ
+        - How do I update the firmware?
+        - How do I calibrate the compass?
+        - How do I set up a new vehicle?
+        - How do I record video?
+        - How do I change the video source?
+        - How do I log out?
+
+---
+
+15. APPENDIX
+   15.1 Keyboard Shortcuts Reference
+        - Complete list of all keyboard shortcuts
+   15.2 MAVLink Message Reference
+        - Common messages used by FWDGCS
+        - Custom messages (if any)
+   15.3 Supported File Formats
+        - Mission plans
+        - Waypoint files
+        - Parameter files
+        - Log files
+   15.4 GStreamer Pipeline Reference
+        - Common pipeline strings
+        - Debugging pipeline issues
+   15.5 Glossary of Terms
+        - Technical terms and acronyms
+        - MAVLink terminology
+        - Aviation / UAV terminology
+   15.6 Version History & Changelog
+        - FWDGCS version history
+        - What changed in each version
+        - Known issues and limitations
+
+================================================================================
+END OF OUTLINE
+================================================================================

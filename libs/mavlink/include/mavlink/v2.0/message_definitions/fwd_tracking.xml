@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<mavlink>
+    <version>3</version>
+
+    <include>common.xml</include>
+
+    <messages>
+        <message id="42001" name="CAMERA_TRACK_POINT">
+            <description>
+                Command to start or update camera tracking using image coordinates
+            </description>
+
+            <field type="float" name="x_norm">
+                Normalized X coordinate (0.0 left, 1.0 right)
+            </field>
+
+            <field type="float" name="y_norm">
+                Normalized Y coordinate (0.0 top, 1.0 bottom)
+            </field>
+
+            <field type="uint8_t" name="tracking_enable">
+                1 = start/update tracking, 0 = stop tracking
+            </field>
+        </message>
+    </messages>
+</mavlink>

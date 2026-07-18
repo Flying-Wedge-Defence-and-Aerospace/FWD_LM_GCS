@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FWDGCS Software User Manual v2.0</title>
+<style>
+  @page {
+    size: A4;
+    margin: 2.5cm 2cm 2.5cm 2cm;
+    @bottom-center {
+      content: counter(page) " / " counter(pages);
+      font-size: 9pt;
+      color: #666;
+      font-family: "Noto Sans", "DejaVu Sans", sans-serif;
+    }
+    @bottom-left {
+      content: "2026 FWD Defence Copyright";
+      font-size: 8pt;
+      color: #999;
+      font-family: "Noto Sans", "DejaVu Sans", sans-serif;
+    }
+  }
+  @page :first {
+    @bottom-center { content: none; }
+    @bottom-left { content: none; }
+  }
+  @page cover {
+    @bottom-center { content: none; }
+    @bottom-left { content: none; }
+  }
+  @page toc {
+    @bottom-center { content: none; }
+    @bottom-left { content: none; }
+  }
+  body {
+    font-family: "Noto Sans", "DejaVu Sans", sans-serif;
+    font-size: 10pt;
+    line-height: 1.5;
+    color: #222;
+    counter-reset: h1counter;
+  }
+  /* ===== COVER PAGE ===== */
+  .cover-page {
+    page: cover;
+    page-break-after: always;
+    text-align: center;
+    padding-top: 5cm;
+  }
+  .cover-page .logo {
+    font-size: 36pt;
+    font-weight: bold;
+    color: #700000;
+    margin-bottom: 0.5cm;
+  }
+  .cover-page .title {
+    font-size: 22pt;
+    font-weight: bold;
+    color: #222;
+    margin-bottom: 0.3cm;
+  }
+  .cover-page .subtitle {
+    font-size: 14pt;
+    color: #555;
+    margin-bottom: 2cm;
+  }
+  .cover-page .info {
+    font-size: 10pt;
+    color: #666;
+    line-height: 2;
+  }
+  .cover-page .company {
+    margin-top: 3cm;
+    font-size: 11pt;
+    color: #700000;
+    font-weight: bold;
+  }
+  .cover-page .website {
+    font-size: 10pt;
+    color: #333;
+  }
+  .cover-page .legal {
+    margin-top: 1.5cm;
+    font-size: 8pt;
+    color: #888;
+    text-align: left;
+    padding: 0 1cm;
+    line-height: 1.6;
+  }
+  /* ===== TABLE OF CONTENTS ===== */
+  .toc-page {
+    page: toc;
+    page-break-after: always;
+  }
+  .toc-page h2 {
+    font-size: 16pt;
+    color: #700000;
+    border-bottom: 2px solid #700000;
+    padding-bottom: 4px;
+    margin-bottom: 0.5cm;
+    counter-reset: h1counter 0;
+  }
+  .toc-page h2::before { content: none; }
+  .toc-entry {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+    font-size: 10pt;
+    border-bottom: 1px dotted #ddd;
+  }
+  .toc-entry .num { font-weight: bold; min-width: 3cm; }
+  .toc-entry.sub { padding-left: 0.8cm; font-size: 9pt; }
+  .toc-entry.sub .num { min-width: 3cm; }
+
+  /* ===== HEADINGS ===== */
+  h1 {
+    font-size: 16pt;
+    color: #700000;
+    border-bottom: 2px solid #700000;
+    padding-bottom: 4px;
+    margin-top: 1.5cm;
+    page-break-before: always;
+    counter-increment: h1counter;
+    counter-reset: h2counter;
+  }
+  h1::before {
+    content: counter(h1counter) " ";
+  }
+  h2 {
+    font-size: 13pt;
+    color: #333;
+    margin-top: 0.8cm;
+    counter-increment: h2counter;
+    counter-reset: h3counter;
+  }
+  h2::before {
+    content: counter(h1counter) "." counter(h2counter) " ";
+  }
+  h3 {
+    font-size: 11pt;
+    color: #444;
+    margin-top: 0.5cm;
+    counter-increment: h3counter;
+    counter-reset: h4counter;
+  }
+  h3::before {
+    content: counter(h1counter) "." counter(h2counter) "." counter(h3counter) " ";
+  }
+  h4 {
+    font-size: 10.5pt;
+    color: #555;
+    margin-top: 0.4cm;
+    counter-increment: h4counter;
+  }
+  h4::before {
+    content: counter(h1counter) "." counter(h2counter) "." counter(h3counter) "." counter(h4counter) " ";
+  }
+  p { margin: 0.3cm 0; }
+  ul, ol { margin: 0.2cm 0; padding-left: 1.2cm; }
+  li { margin: 0.15cm 0; }
+
+  /* ===== CALLOUT BOXES ===== */
+  .note-box {
+    background: #f0f7ff;
+    border-left: 4px solid #4488cc;
+    padding: 8px 12px;
+    margin: 0.5cm 0;
+    font-size: 9.5pt;
+  }
+  .note-box strong { color: #4488cc; }
+  .danger-box {
+    background: #fff0f0;
+    border-left: 4px solid #cc4444;
+    padding: 8px 12px;
+    margin: 0.5cm 0;
+    font-size: 9.5pt;
+  }
+  .danger-box strong { color: #cc4444; }
+  .warning-box {
+    background: #fff8e8;
+    border-left: 4px solid #e8a000;
+    padding: 8px 12px;
+    margin: 0.5cm 0;
+    font-size: 9.5pt;
+  }
+  .warning-box strong { color: #e8a000; }
+
+  /* ===== TABLES ===== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.4cm 0;
+    font-size: 9pt;
+  }
+  th {
+    background: #700000;
+    color: white;
+    padding: 6px 8px;
+    text-align: left;
+    font-weight: bold;
+  }
+  td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #ddd;
+  }
+  tr:nth-child(even) td { background: #f8f8f8; }
+
+  /* ===== SCREENSHOT PLACEHOLDER ===== */
+  .screenshot {
+    text-align: center;
+    margin: 0.5cm 0;
+  }
+  .screenshot .placeholder {
+    display: inline-block;
+    border: 1px dashed #aaa;
+    background: #f5f5f5;
+    padding: 2cm 4cm;
+    color: #999;
+    font-size: 10pt;
+  }
+
+  /* ===== PARAMETER TABLE ===== */
+  .param-table th:first-child { width: 35%; }
+  .param-table th:nth-child(2) { width: 65%; }
+
+  /* ===== SHORTCUT TABLE ===== */
+  .shortcut-table th:first-child { width: 30%; }
+  .shortcut-table th:nth-child(2) { width: 70%; }
+
+  /* ===== FIRST PAGE AFTER COVER/TOC ===== */
+  .first-content h1 { page-break-before: auto; }
+</style>
+</head>
+<body>
+
+<!-- ==================== COVER PAGE ==================== -->
+<div class="cover-page">
+  <div class="logo">FWDGCS</div>
+  <div class="title">FWD Ground Control Station</div>
+  <div class="subtitle">Software User Manual v2.0</div>
+  <div class="info">
+    Version: 2.0<br>
+    Document Version: 1.0<br>
+    Date: May 2026<br>
+    Platform: Windows / Linux / Android
+  </div>
+  <div class="company">FWD Defence</div>
+  <div class="website">fwdefence.com</div>
+  <div class="legal">
+    <strong>Disclaimer</strong><br>
+    FWDGCS is designed and manufactured for professional applications. Operators are expected to possess fundamental technical skills. Please handle this product with care.<br><br>
+    FWD Defence shall not be held liable for any economic loss or personal injury resulting from improper or unsafe operation of this product.<br><br>
+    Unauthorized disassembly or modification is strictly prohibited without prior consent from FWD Defence.<br><br>
+    This manual addresses most common usage questions. For additional assistance, please contact FWD Defence support.
+  </div>
+</div>
+
+<!-- ==================== TABLE OF CONTENTS ==================== -->
+<div class="toc-page">
+  <h2>CONTENT</h2>
+  <div class="toc-entry"><span class="num">1</span><span>Product Overview</span></div>
+  <div class="toc-entry sub"><span class="num">1.1</span><span>Product Description</span></div>
+  <div class="toc-entry sub"><span class="num">1.2</span><span>User Guide Structure</span></div>
+  <div class="toc-entry"><span class="num">2</span><span>Installation and Configuration</span></div>
+  <div class="toc-entry sub"><span class="num">2.1</span><span>System Requirements</span></div>
+  <div class="toc-entry sub"><span class="num">2.2</span><span>Installation Steps</span></div>
+  <div class="toc-entry sub"><span class="num">2.3</span><span>Initial Configuration</span></div>
+  <div class="toc-entry"><span class="num">3</span><span>Quick Start</span></div>
+  <div class="toc-entry sub"><span class="num">3.1</span><span>Main Interface Overview</span></div>
+  <div class="toc-entry sub"><span class="num">3.2</span><span>Quick Start Example</span></div>
+  <div class="toc-entry"><span class="num">4</span><span>Core Function Instructions</span></div>
+  <div class="toc-entry sub"><span class="num">4.1</span><span>Login Module</span></div>
+  <div class="toc-entry sub"><span class="num">4.2</span><span>Fly View Module</span></div>
+  <div class="toc-entry sub"><span class="num">4.3</span><span>Video System Module</span></div>
+  <div class="toc-entry sub"><span class="num">4.4</span><span>Mission Planning Module</span></div>
+  <div class="toc-entry sub"><span class="num">4.5</span><span>Vehicle Setup Module</span></div>
+  <div class="toc-entry"><span class="num">5</span><span>Settings and Preferences</span></div>
+  <div class="toc-entry"><span class="num">6</span><span>Safety Parameters</span></div>
+  <div class="toc-entry"><span class="num">7</span><span>Data Persistence and Logs</span></div>
+  <div class="toc-entry"><span class="num">8</span><span>Troubleshooting</span></div>
+  <div class="toc-entry sub"><span class="num">8.1</span><span>Common Errors</span></div>
+  <div class="toc-entry sub"><span class="num">8.2</span><span>Contact Support</span></div>
+  <div class="toc-entry"><span class="num">9</span><span>Appendix</span></div>
+  <div class="toc-entry sub"><span class="num">9.1</span><span>Glossary</span></div>
+  <div class="toc-entry sub"><span class="num">9.2</span><span>Keyboard Shortcuts</span></div>
+  <div class="toc-entry sub"><span class="num">9.3</span><span>Parameter Mapping</span></div>
+  <div class="toc-entry sub"><span class="num">9.4</span><span>Version Update Log</span></div>
+</div>
+
+<!-- ==================== 1 PRODUCT OVERVIEW ==================== -->
+<h1>Product Overview</h1>
+
+<p><strong>Functions:</strong><br>
+FWDGCS provides functionalities including flight control, aircraft configuration, UAV data monitoring, mission planning, camera operation, video transmission, and login authentication.</p>
+
+<p><strong>Applications:</strong></p>
+<ul>
+  <li>Flight control and operation</li>
+  <li>Mission planning and execution</li>
+  <li>Data exchange and processing</li>
+  <li>System monitoring and maintenance</li>
+</ul>
+
+<p><strong>Supported UAV Types:</strong></p>
+<ul>
+  <li>Multirotor UAVs</li>
+  <li>Fixed-wing UAVs</li>
+  <li>VTOL Fixed-wing UAVs</li>
+  <li>Ground vehicles</li>
+  <li>Watercraft</li>
+</ul>
+
+<h2>Product Description</h2>
+
+<p><strong>Purpose of the Software:</strong><br>
+Flight control and mission execution. Data visualization and decision support.</p>
+
+<p><strong>Core Features:</strong></p>
+<ul>
+  <li>Flight control</li>
+  <li>Mission management and payload control</li>
+  <li>Data exchange and processing</li>
+  <li>System maintenance and diagnostics</li>
+  <li>Login authentication and session management</li>
+  <li>Enhanced video streaming with custom controls</li>
+</ul>
+
+<p><strong>Supported Platform:</strong><br>
+Windows 10/11, Ubuntu 20.04/22.04, Android 8.0+</p>
+
+<p><strong>What Makes FWDGCS Different:</strong><br>
+FWDGCS extends standard QGC with a custom login/authentication system, enhanced video controls, FWD branding (deep red theme #700000, FWD logo), and Navy-specific pre-configurations.</p>
+
+<h2>User Guide Structure</h2>
+
+<p><strong>Introduction:</strong><br>
+This user manual provides detailed instructions and descriptions of each functional module of the software.</p>
+
+<p><strong>Intended Audience:</strong><br>
+FWDGCS is designed for professional use. Operators are expected to possess basic technical skills and should exercise caution during operation.</p>
+
+<div class="note-box">
+<strong>Note:</strong> This manual addresses most common usage questions. For additional assistance, please contact FWD Defence support.
+</div>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: FWDGCS Main Interface]</div>
+</div>
+
+<!-- ==================== 2 INSTALLATION AND CONFIGURATION ==================== -->
+<h1>Installation and Configuration</h1>
+
+<h2>System Requirements</h2>
+
+<table>
+  <tr><th>Component</th><th>Minimum</th><th>Recommended</th></tr>
+  <tr><td>OS (Desktop)</td><td>Windows 10 / Ubuntu 20.04</td><td>Windows 11 / Ubuntu 22.04</td></tr>
+  <tr><td>OS (Mobile)</td><td>Android 8.0</td><td>Android 11+</td></tr>
+  <tr><td>Processor</td><td>Intel Core i5 2.5 GHz</td><td>Intel Core i7 3.0 GHz</td></tr>
+  <tr><td>RAM</td><td>8 GB</td><td>16 GB</td></tr>
+  <tr><td>Storage</td><td>500 MB free</td><td>10 GB (logs + maps)</td></tr>
+  <tr><td>Graphics</td><td>OpenGL 3.3 support</td><td>Dedicated GPU with video decode</td></tr>
+  <tr><td>Display</td><td>1280 x 720</td><td>1920 x 1080+</td></tr>
+</table>
+
+<h2>Installation Steps</h2>
+
+<h3>Windows Installation</h3>
+<ol>
+  <li>Download the FWDGCS installer (<code>FWD_NAVY_GCS-x.x.x-installer.exe</code>) from the FWD distribution portal</li>
+  <li>Run the installer as Administrator</li>
+  <li>Follow the setup wizard — accept the license, choose installation directory (default: <code>C:\Program Files\FWDGCS</code>), select components</li>
+  <li>Click Install</li>
+  <li>Launch FWDGCS from the Start Menu or desktop shortcut</li>
+</ol>
+
+<div class="note-box">
+<strong>Note:</strong> If video is not working, install GStreamer 1.18.6 runtime separately. Configure Windows Firewall to allow FWDGCS for MAVLink UDP/TCP ports.
+</div>
+
+<h3>Linux Installation</h3>
+<ol>
+  <li>Download the AppImage: <code>FWD_NAVY_GCS-x.x.x-x86_64.AppImage</code></li>
+  <li>Make it executable: <code>chmod +x FWD_NAVY_GCS-x.x.x-x86_64.AppImage</code></li>
+  <li>Run: <code>./FWD_NAVY_GCS-x.x.x-x86_64.AppImage</code></li>
+</ol>
+
+<h3>Android Installation</h3>
+<ol>
+  <li>Download the APK: <code>FWD_NAVY_GCS-vx.x.x.apk</code></li>
+  <li>Enable Install from Unknown Sources in Settings > Security</li>
+  <li>Open the APK file and follow installation prompts</li>
+  <li>Grant permissions: Location, Storage, USB</li>
+</ol>
+
+<h2>Initial Configuration</h2>
+
+<p>When launching the software for the first time, a login window will appear. Log in using your account credentials. After successful login, you can view your account information in System Settings.</p>
+
+<div class="warning-box">
+<strong>Warning:</strong> To ensure proper operation of the software, please enable all required permissions when prompted.
+</div>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Installation wizard]</div>
+</div>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Permission request dialog]</div>
+</div>
+
+<!-- ==================== 3 QUICK START ==================== -->
+<h1>Quick Start</h1>
+
+<h2>Main Interface Overview</h2>
+
+<p>Upon successful login, the main interface is displayed containing the toolbar, status bar, and view selector. The main views are: Fly, Plan, Setup, and Analyze.</p>
+
+<h3>Flight Information</h3>
+<p>The status bar displays GPS status, battery voltage, telemetry signal strength (RSSI), flight mode, and armed status.</p>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Main Interface Overview]</div>
+</div>
+
+<h2>Quick Start Example</h2>
+<p>The following is an example of video output, drone connection, and quick takeoff.</p>
+
+<h3>Camera Output</h3>
+<p><strong>Step 1:</strong> Tap the three dots in the top-right corner.</p>
+<p><strong>Step 2:</strong> Select the Camera Module.</p>
+<p><strong>Step 3:</strong> Tap the downward triangle in the camera address bar and select the correct camera address. Alternatively, tap the pencil icon to manually enter the camera address as prompted.</p>
+
+<h3>Data Link Connection</h3>
+<p><strong>Step 1:</strong> Tap the three dots in the top-right corner.</p>
+<p><strong>Step 2:</strong> Set Data Link to UDP, and set the baud rate to 57600 (ensure it matches the baud rate set in the flight controller).</p>
+<p><strong>Step 3:</strong> Set the connection type, then click Connect. Enter the address as prompted and click Confirm to establish the connection.</p>
+
+<h3>Shortcut Buttons</h3>
+<p><strong>One-Touch Takeoff:</strong> Tap the one-touch takeoff button, then press and hold as prompted. The drone will climb to 10 meters and hover.</p>
+<p><strong>One-Touch Landing:</strong> Tap the one-touch landing button, and the drone will land at its current position.</p>
+<p><strong>One-Touch Return:</strong> Tap the one-touch return button, and the drone will climb to the return altitude and fly back to the takeoff point.</p>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Quick start buttons]</div>
+</div>
+
+<!-- ==================== 4 CORE FUNCTION INSTRUCTIONS ==================== -->
+<h1>Core Function Instructions</h1>
+<p>The core functions include: Login Module, Fly View Module, Video System Module, Mission Planning Module, and Vehicle Setup Module.</p>
+
+<!-- ===== 4.1 LOGIN MODULE ===== -->
+<h2>Login Module</h2>
+
+<h3>Login Screen Overview</h3>
+<p>When FWDGCS starts, the login screen is displayed. Features include:</p>
+<ul>
+  <li>FWD Logo displayed prominently at the top</li>
+  <li>Title: "GROUND CONTROL STATION" with "FWDGCS" subtitle</li>
+  <li>Red gradient theme (#700000)</li>
+  <li>Login form with username, password, Remember Me checkbox, and Login button</li>
+  <li>Register link to toggle to registration form</li>
+</ul>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Login Screen]</div>
+</div>
+
+<h3>Login Procedure</h3>
+<ol>
+  <li>Enter your Username and Password</li>
+  <li>Check Remember Me to retain credentials on this device</li>
+  <li>Click Login</li>
+  <li>On successful authentication, the main application window loads</li>
+</ol>
+
+<h3>Registration</h3>
+<p>If you do not have an account, click the Register link and fill in the required fields: Full Name, Username, Email Address, Password, Confirm Password. Click Register to submit.</p>
+
+<div class="note-box">
+<strong>Note:</strong> Registration functionality may require server-side setup. Contact your system administrator if registration is unavailable.
+</div>
+
+<h3>Session Management</h3>
+<ul>
+  <li>Your session remains active until you log out or close the application</li>
+  <li>Remember Me stores a token locally for automatic login on subsequent launches</li>
+  <li>Sessions have a configurable timeout period after which re-authentication is required</li>
+</ul>
+
+<h3>Logout</h3>
+<ol>
+  <li>Click the profile icon on the main toolbar</li>
+  <li>Select Log Out</li>
+  <li>Confirm the action when prompted</li>
+  <li>The application checks for active vehicle connections before logging out</li>
+  <li>You are returned to the login screen</li>
+</ol>
+
+<div class="danger-box">
+<strong>Danger:</strong> Ensure your vehicle is safely landed and disarmed before logging out, as the connection will be terminated.
+</div>
+
+<h3>Login Troubleshooting</h3>
+<table>
+  <tr><th>Issue</th><th>Solution</th></tr>
+  <tr><td>Invalid credentials</td><td>Check username/password; ensure Caps Lock is off</td></tr>
+  <tr><td>Server unreachable</td><td>Check network connectivity; contact administrator</td></tr>
+  <tr><td>Session expired</td><td>Re-enter credentials</td></tr>
+  <tr><td>Account locked</td><td>Wait 15 minutes or contact administrator</td></tr>
+</table>
+
+<!-- ===== 4.2 FLY VIEW MODULE ===== -->
+<h2>Fly View Module</h2>
+
+<h3>Main Menu</h3>
+<p>The Fly View is the primary interface for in-flight operations, consisting of:</p>
+<ul>
+  <li>Primary Flight Display (PFD) — artificial horizon, attitude, heading</li>
+  <li>Map Panel — vehicle position, waypoints, obstacles</li>
+  <li>Video Panel — live camera feed with overlay</li>
+  <li>Telemetry Strip — real-time vehicle data</li>
+  <li>Action Buttons — Arm, Disarm, Takeoff, Land, RTL, Pause</li>
+</ul>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Fly View Main Interface]</div>
+</div>
+
+<h3>Connection Method</h3>
+<p>Switch the connection type within the flight controller module to the desired mode. Click Connect and follow the on-screen instructions to establish the connection.</p>
+
+<table>
+  <tr><th>Method</th><th>Typical Use Case</th></tr>
+  <tr><td>Serial (UART)</td><td>Telemetry radio (SiK, Holybro, etc.)</td></tr>
+  <tr><td>USB</td><td>Direct connection to autopilot</td></tr>
+  <tr><td>UDP</td><td>WiFi bridge, companion computer</td></tr>
+  <tr><td>TCP</td><td>Remote link, relay server</td></tr>
+</table>
+
+<h3>Artificial Horizon / Attitude Indicator</h3>
+<p>The PFD shows pitch, roll, heading, groundspeed, altitude, and vertical speed.</p>
+
+<h3>Telemetry Data Display</h3>
+<table>
+  <tr><th>Parameter</th><th>Description</th></tr>
+  <tr><td>Altitude</td><td>Height above home position (m/ft)</td></tr>
+  <tr><td>Groundspeed</td><td>Speed over ground (m/s / knots)</td></tr>
+  <tr><td>Airspeed</td><td>Speed through air, fixed-wing only (m/s / knots)</td></tr>
+  <tr><td>Heading</td><td>Compass heading (0–360°)</td></tr>
+  <tr><td>Battery Voltage</td><td>Current battery voltage (V)</td></tr>
+  <tr><td>Battery Remaining</td><td>Estimated remaining charge (%)</td></tr>
+  <tr><td>GPS Satellites</td><td>Number of satellites locked</td></tr>
+  <tr><td>Flight Time</td><td>Time since arming (HH:MM:SS)</td></tr>
+  <tr><td>Link Quality</td><td>Radio signal quality (%)</td></tr>
+</table>
+
+<h3>Map Interaction</h3>
+<ul>
+  <li>Pan: Click and drag</li>
+  <li>Zoom: Scroll wheel, pinch (touch), or +/- buttons</li>
+  <li>Centre on Vehicle: Double-click vehicle icon or press C</li>
+  <li>Map Layers: Satellite, street, hybrid, or terrain</li>
+  <li>Vehicle Trail: Recent path with altitude-colour-coded dots</li>
+  <li>Geofence overlay display</li>
+</ul>
+
+<h3>In-Flight Controls</h3>
+<table>
+  <tr><th>Button</th><th>Action</th></tr>
+  <tr><td>Arm</td><td>Arms motors — requires pre-arm checks</td></tr>
+  <tr><td>Disarm</td><td>Disarms motors</td></tr>
+  <tr><td>Takeoff</td><td>Autonomous takeoff to specified altitude</td></tr>
+  <tr><td>Land</td><td>Land at current position</td></tr>
+  <tr><td>RTL</td><td>Return to Launch / Home</td></tr>
+  <tr><td>Pause</td><td>Pause mission, hold position</td></tr>
+</table>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Fly View with in-flight controls]</div>
+</div>
+
+<h3>Flight Controller Module</h3>
+
+<h4>Flight Settings</h4>
+<p>Includes speed limits, altitude limits, and failsafe behavior. After entering parameters, click Send to save.</p>
+
+<table class="param-table">
+  <tr><th>Quick Setting</th><th>ArduPilot Parameter</th></tr>
+  <tr><td>Throttle Failsafe</td><td>FS_THR_ENABLE</td></tr>
+  <tr><td>Follow Speed</td><td>WPNAV_SPEED</td></tr>
+  <tr><td>Return-to-Home Altitude</td><td>RTL_ALT</td></tr>
+  <tr><td>Return-to-Home Speed</td><td>RTL_SPEED</td></tr>
+  <tr><td>Loiter Acceleration Limit</td><td>LOIT_ACC_MAX</td></tr>
+  <tr><td>Maximum Braking Acceleration</td><td>LOIT_BRK_ACCEL</td></tr>
+</table>
+
+<h4>Voltage</h4>
+<table class="param-table">
+  <tr><th>Setting</th><th>ArduPilot Parameter</th></tr>
+  <tr><td>Low Voltage</td><td>BATT_LOW_VOLT</td></tr>
+  <tr><td>Critical Low Voltage</td><td>BATT_CRT_VOLT</td></tr>
+  <tr><td>Low Voltage Action</td><td>BATT_FS_LOW_ACT</td></tr>
+  <tr><td>Critical Low Voltage Action</td><td>BATT_FS_CRT_ACT</td></tr>
+  <tr><td>Arming Voltage</td><td>BATT_ARM_VOLT</td></tr>
+</table>
+
+<h4>Accelerometer Menu</h4>
+<p>Displays accelerometer data and IMU temperature. Provides options for accelerometer calibration and flight controller levelling.</p>
+
+<p><strong>Accelerometer Calibration:</strong> Follow instructions to place the drone in six orientations as shown. After completion, restart the drone.</p>
+
+<p><strong>Horizontal Calibration:</strong> Place the drone on a flat, level surface and ensure it remains still. Click Horizontal Calibration.</p>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Accelerometer calibration]</div>
+</div>
+
+<h4>Compass Menu</h4>
+<p>Do not calibrate in areas with strong magnetic fields or near large metal objects. Avoid carrying ferromagnetic materials during calibration.</p>
+
+<p><strong>Steps:</strong></p>
+<ol>
+  <li>Open the compass calibration interface</li>
+  <li>Click Calibrate</li>
+  <li>Lift the drone and rotate in different directions — ensure each side (front, back, left, right, top, bottom) points downward for a few seconds</li>
+  <li>Restart the drone</li>
+</ol>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Compass calibration]</div>
+</div>
+
+<h4>Remote Control Calibration</h4>
+<p><strong>Stick Centering:</strong> Before calibration, ensure all sticks are centred, confirm correct polarity, then click Calibrate.</p>
+<p><strong>Safety Tips:</strong> Remove all propellers before calibration. Click Confirm.</p>
+<p><strong>Channel Data Logging:</strong> Gradually move joysticks and switches to their maximum and minimum positions in sequence.</p>
+<p><strong>Calibration Complete:</strong> Click Complete to finish. The software displays recorded maximum and minimum values for each channel.</p>
+
+<h4>Parameter Table</h4>
+<p>Includes functions for importing, exporting, searching, modifying, refreshing, resetting, and rebooting the flight controller.</p>
+
+<p><strong>Parameter Search:</strong> Enter the parameter name and click search.</p>
+<p><strong>Parameter Modification:</strong> Double-check parameters before modification. Enter the desired value and click Write.</p>
+<p><strong>Parameter Export:</strong> Click Export Parameters to save all parameters to the remote controller.</p>
+<p><strong>Parameter Import:</strong> Click Import Parameters and follow prompts to import parameters to the flight controller.</p>
+<p><strong>Parameter Reset:</strong> Click Reset to restore all parameters to default settings.</p>
+<p><strong>Flight Controller Restart:</strong> Click Restart Flight Controller to remotely reboot. Must be in unlocked state.</p>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Parameter table]</div>
+</div>
+
+<!-- ===== 4.3 VIDEO SYSTEM MODULE ===== -->
+<h2>Video System Module</h2>
+
+<h3>Camera Main Menu</h3>
+<p>Mainly includes camera stream address selection, camera version information, and various control buttons.</p>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Camera Main Menu]</div>
+</div>
+
+<h3>Video Stream Address and Version Information</h3>
+<p><strong>Main Stream / Sub Stream:</strong> Set the camera source and parameters.</p>
+<p><strong>Address Settings:</strong> Configure camera source, select default or manually input RTSP address, disable image display, etc.</p>
+
+<div class="note-box">
+<strong>Note:</strong> When manually entering the address, ensure punctuation marks are in English mode.
+</div>
+
+<p><strong>Version Information:</strong></p>
+<ul>
+  <li>Camera Firmware Version</li>
+  <li>Gimbal Firmware Version</li>
+  <li>Zoom Firmware Version (optical zoom cameras only)</li>
+</ul>
+
+<h3>Camera Display Operations</h3>
+<ul>
+  <li>Click minimize button to hide the display</li>
+  <li>Drag the arrow at the top of the display to zoom in or out</li>
+  <li>Single-click the small window display to expand to full screen</li>
+  <li>After minimizing, click the camera button to restore display</li>
+  <li>Long press anywhere and drag the ball to rotate the camera</li>
+  <li>Single-click anywhere to auto-focus (zoom cameras)</li>
+</ul>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Video display controls]</div>
+</div>
+
+<h3>Gimbal Camera Settings</h3>
+<p>Set the relevant parameters for the gimbal and camera.</p>
+
+<p><strong>Stream Resolution:</strong> Supports HD (720p) and Ultra-HD (1080p).</p>
+<p><strong>Auto Record on Startup:</strong> Enable/disable automatic video recording to TF card.</p>
+<p><strong>Grid Lines:</strong> Overlay grid lines and diagonals for compositional assistance.</p>
+<p><strong>Video Output Interface:</strong> HDMI, CVBS, or Off.</p>
+
+<p><strong>Gimbal Work Modes:</strong></p>
+<ul>
+  <li><strong>Lock Mode:</strong> Gimbal does not follow drone horizontal movement</li>
+  <li><strong>Follow Mode:</strong> Gimbal follows drone horizontal rotation</li>
+  <li><strong>FPV Mode:</strong> Gimbal follows drone roll direction</li>
+  <li><strong>AI Tracking Mode:</strong> AI tracking module connected</li>
+</ul>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Gimbal camera settings]</div>
+</div>
+
+<h3>Camera Control</h3>
+
+<h4>Camera Zoom</h4>
+<p>Control the zoom camera to zoom in and out. Single click = one-time operation; long press = continuous operation.</p>
+
+<h4>Manual Focus</h4>
+<p>Manually adjust camera focus. Single click = one-time operation; long press = continuous operation.</p>
+
+<h4>Photo and Video Recording</h4>
+<p><strong>Photo:</strong> Single click captures a photo. Success message appears on screen.</p>
+<p><strong>Video:</strong> Click square button to start recording (turns red circle). Recording time and resolution appear in title bar. Click again to stop.</p>
+
+<h4>Camera Screen Recording</h4>
+<p>Record the camera screen on the ground station and save locally. Click button to start (highlights). Click again to stop.</p>
+
+<h4>Gimbal Centering / Lens Down</h4>
+<ul>
+  <li>Yaw and pitch centering: automatically centres both axes</li>
+  <li>Yaw centering + one-touch lens down</li>
+  <li>Yaw centering only</li>
+  <li>One-touch lens down only</li>
+</ul>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Camera control buttons]</div>
+</div>
+
+<h4>Video Transmission Settings</h4>
+<p><strong>Video Transmission Mode:</strong> Change the bitrate mode.</p>
+<p><strong>Downlink Bandwidth:</strong> Switch maximum bandwidth for video downlink.</p>
+<p><strong>Operating Frequency Band:</strong> Manually switch frequency band.</p>
+<p><strong>Adaptive Wireless Channel:</strong> In complex electromagnetic environments, enable for automatic channel selection. When disabled, manually select channels 1–32.</p>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Video transmission settings]</div>
+</div>
+
+<!-- ===== 4.4 MISSION PLANNING MODULE ===== -->
+<h2>Mission Planning Module</h2>
+
+<h3>Main Menu of the Waypoint Module</h3>
+<ul>
+  <li><strong>View and Plan Waypoints:</strong> View waypoint library, plan standard and mapping missions</li>
+  <li><strong>Start/Pause Mission:</strong> Start mission execution. During execution, click to pause (multirotor hovers, fixed-wing loiters, rover holds). Click again to resume</li>
+  <li><strong>Clear Mission:</strong> Clears mission from interface and flight controller. Confirmation required during execution</li>
+  <li><strong>Exit Mission:</strong> Exit current mission (multirotor hovers, fixed-wing loiters, rover holds)</li>
+  <li><strong>Download Mission:</strong> Download mission stored in flight controller</li>
+  <li><strong>Locate Aircraft:</strong> Centre aircraft on map</li>
+  <li><strong>Map Type:</strong> Switch between street and satellite map</li>
+</ul>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Waypoint module main menu]</div>
+</div>
+
+<h3>Mission Library</h3>
+<p>Stores planned and saved missions for easy viewing and modification.</p>
+
+<h3>Waypoint Mission</h3>
+<p>Each waypoint's location must be manually selected. Altitude, speed, and action can be adjusted. The completion action can also be modified.</p>
+
+<h4>Create Mission</h4>
+<p>Click Mission Planning button, select Create Waypoint Mission.</p>
+
+<h4>Waypoint Flight</h4>
+<p>Assign a name to the mission. Supports switching altitude modes:</p>
+<ul>
+  <li><strong>Absolute Altitude:</strong> Height relative to mean sea level (MSL)</li>
+  <li><strong>Relative Altitude:</strong> Height relative to takeoff point</li>
+</ul>
+
+<h4>Route Settings</h4>
+<ul>
+  <li><strong>Safe Takeoff Altitude:</strong> Altitude to reach before first waypoint</li>
+  <li><strong>Speed:</strong> Horizontal speed during waypoint flight</li>
+  <li><strong>Route Altitude:</strong> Flight altitude during mission</li>
+  <li><strong>Completion Action:</strong> Return to Home, Landing, or Hover</li>
+</ul>
+
+<h4>Waypoint Settings</h4>
+<ul>
+  <li><strong>Speed:</strong> Flying speed after reaching waypoint</li>
+  <li><strong>Height:</strong> Required altitude before reaching waypoint</li>
+  <li><strong>Waypoint Action:</strong> Actions executed after reaching waypoint</li>
+  <li><strong>Hover:</strong> Hover at waypoint for set duration</li>
+  <li><strong>Latitude/Longitude Fine-tuning</strong></li>
+</ul>
+
+<h4>Task Execution</h4>
+<ol>
+  <li>After planning, click Save</li>
+  <li>Click Start to upload flight route</li>
+  <li>Confirm flight checklist</li>
+  <li>Check route information (speed, altitude range, completion actions)</li>
+  <li>Wait for route upload to complete</li>
+  <li>Unlock the drone and click Execute Task</li>
+</ol>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Waypoint mission planning]</div>
+</div>
+
+<h4>Jump to Current</h4>
+<p>Click a specific waypoint, then click Jump to Current. The drone flies directly to the selected waypoint.</p>
+
+<div class="note-box">
+<strong>Note:</strong> If clicking has no effect, download the flight route first, then select a waypoint to execute the jump action.
+</div>
+
+<h3>Mapping Route</h3>
+<p>Plan mapping routes by manually selecting boundary points. Modify height, speed, and completion actions.</p>
+
+<h4>Route Planning</h4>
+<p>Click Route Planning, select Create Mapping Route.</p>
+
+<h4>Mapping Route Settings</h4>
+<ul>
+  <li><strong>Select Camera:</strong> Choose camera for mapping tasks</li>
+  <li><strong>GSD:</strong> Ground Sample Distance</li>
+  <li><strong>Altitude Mode:</strong> Absolute or Relative</li>
+  <li><strong>Route Speed/Height</strong></li>
+  <li><strong>Completion Action</strong></li>
+  <li><strong>Advanced Settings:</strong> Heading overlap, sidelap, external margin</li>
+</ul>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Mapping route planning]</div>
+</div>
+
+<!-- ===== 4.5 VEHICLE SETUP MODULE ===== -->
+<h2>Vehicle Setup Module</h2>
+
+<h3>Main Menu</h3>
+<p>The Setup View provides a step-by-step wizard for configuring the vehicle.</p>
+
+<h3>Firmware</h3>
+<ol>
+  <li>Connect the autopilot via USB</li>
+  <li>Go to Setup > Firmware</li>
+  <li>Current firmware version is displayed</li>
+  <li>Select firmware type (ArduPilot or PX4)</li>
+  <li>Click Flash Firmware</li>
+</ol>
+
+<h3>Airframe</h3>
+<ol>
+  <li>Go to Setup > Airframe</li>
+  <li>Browse or search for your airframe</li>
+  <li>Select and click Apply and Restart</li>
+</ol>
+
+<h3>Sensor Calibration</h3>
+<table>
+  <tr><th>Sensor</th><th>Procedure</th></tr>
+  <tr><td>Accelerometer</td><td>Place in 6 orientations as prompted</td></tr>
+  <tr><td>Magnetometer</td><td>Rotate in figure-8 pattern</td></tr>
+  <tr><td>Gyroscope</td><td>Place on level surface, click Calibrate</td></tr>
+  <tr><td>Level/Horizon</td><td>Place in normal flight attitude on level surface</td></tr>
+  <tr><td>Airspeed</td><td>Ensure no wind in pitot tube, click Calibrate</td></tr>
+</table>
+
+<h3>Radio Control Calibration</h3>
+<ol>
+  <li>Ensure RC transmitter is bound and powered</li>
+  <li>Go to Setup > Radio</li>
+  <li>Click Calibrate</li>
+  <li>Move each stick to its extremes as instructed</li>
+  <li>Verify channel mapping</li>
+  <li>Set Failsafe values</li>
+</ol>
+
+<h3>Flight Modes</h3>
+<p>Assign flight modes to RC channel positions. Common modes: Stabilize, Altitude Hold, Loiter, Auto, RTL, Land.</p>
+
+<h3>Power & Battery</h3>
+<p>Configure battery monitor, voltage divider, amps per volt, battery capacity, and low battery thresholds.</p>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Vehicle setup wizard]</div>
+</div>
+
+<!-- ==================== 5 SETTINGS AND PREFERENCES ==================== -->
+<h1>Settings and Preferences</h1>
+
+<table>
+  <tr><th>Setting</th><th>Description</th></tr>
+  <tr><td>Language</td><td>UI language selection</td></tr>
+  <tr><td>Units</td><td>Metric or Imperial</td></tr>
+  <tr><td>Map Provider</td><td>Google, Bing, Mapbox, OpenStreetMap</td></tr>
+  <tr><td>Map Type</td><td>Satellite, Street, Hybrid, Terrain</td></tr>
+  <tr><td>Video Source</td><td>UDP, RTSP, TCP, or local</td></tr>
+  <tr><td>Video Decode</td><td>Software or hardware</td></tr>
+  <tr><td>MAVLink Version</td><td>1 or 2</td></tr>
+  <tr><td>Telemetry Logging</td><td>Enable/disable .tlog recording</td></tr>
+  <tr><td>Logging Level</td><td>Debug, Info, Warn, Error</td></tr>
+  <tr><td>Offline Maps</td><td>Download regions for offline use</td></tr>
+</table>
+
+<h2>Software Version Information</h2>
+<p>In the software settings menu, under About, you can find the current version number of the software.</p>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Settings screen]</div>
+</div>
+
+<!-- ==================== 6 SAFETY PARAMETERS ==================== -->
+<h1>Safety Parameters</h1>
+
+<p><strong>Arming Safety Checks:</strong></p>
+<ul>
+  <li>GPS Lock — sufficient satellites and 3D fix</li>
+  <li>Battery Voltage — within acceptable range</li>
+  <li>Accelerometer — calibration valid</li>
+  <li>Magnetometer — calibration valid</li>
+  <li>Gyroscope — calibration valid</li>
+  <li>RC Signal — valid signal received</li>
+  <li>Throttle — at minimum</li>
+</ul>
+
+<p><strong>Failsafe Actions:</strong></p>
+<table>
+  <tr><th>Action</th><th>Behaviour</th></tr>
+  <tr><td>Continue</td><td>Log the event only</td></tr>
+  <tr><td>Loiter</td><td>Hold current position</td></tr>
+  <tr><td>RTL</td><td>Return to home and land</td></tr>
+  <tr><td>Land</td><td>Land immediately</td></tr>
+  <tr><td>Terminate</td><td>Kill motors immediately (emergency only)</td></tr>
+</table>
+
+<p><strong>Failsafe Triggers:</strong></p>
+<table>
+  <tr><th>Failsafe</th><th>Recommended Action</th></tr>
+  <tr><td>RC Loss (no signal >5s)</td><td>RTL or Land</td></tr>
+  <tr><td>Telemetry Loss (>10s)</td><td>RTL</td></tr>
+  <tr><td>Low Battery Stage 1</td><td>RTL</td></tr>
+  <tr><td>Low Battery Stage 2</td><td>Land</td></tr>
+  <tr><td>Geofence Breach</td><td>RTL</td></tr>
+</table>
+
+<h2>RTL Settings</h2>
+<table>
+  <tr><th>Parameter</th><th>Description</th></tr>
+  <tr><td>RTL Altitude</td><td>Altitude to climb before returning (recommended: 50–100m)</td></tr>
+  <tr><td>RTL Climb</td><td>Climb to RTL altitude first (enabled/disabled)</td></tr>
+  <tr><td>RTL Loiter Time</td><td>Time to loiter before landing (0–30s)</td></tr>
+  <tr><td>RTL Descend Rate</td><td>Vertical speed during landing (0.5–2 m/s)</td></tr>
+</table>
+
+<h2>Emergency Procedures</h2>
+<table>
+  <tr><th>Situation</th><th>Action</th></tr>
+  <tr><td>Loss of control</td><td>Engage Kill Switch</td></tr>
+  <tr><td>Flyaway</td><td>Engage RTL immediately</td></tr>
+  <tr><td>Battery critical</td><td>Allow automatic land; do not override</td></tr>
+  <tr><td>Geofence breach</td><td>Monitor; vehicle will execute failsafe</td></tr>
+  <tr><td>Video loss</td><td>Continue mission; video is advisory only</td></tr>
+</table>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Safety parameters]</div>
+</div>
+
+<!-- ==================== 7 DATA PERSISTENCE AND LOGS ==================== -->
+<h1>Data Persistence and Logs</h1>
+
+<table>
+  <tr><th>Data Type</th><th>Windows</th><th>Linux</th></tr>
+  <tr><td>Configuration</td><td>%APPDATA%/FWDGCS/</td><td>~/.config/FWDGCS/</td></tr>
+  <tr><td>Telemetry Logs</td><td>Documents/FWDGCS/Logs/</td><td>~/Documents/FWDGCS/Logs/</td></tr>
+  <tr><td>Missions</td><td>Documents/FWDGCS/Missions/</td><td>~/Documents/FWDGCS/Missions/</td></tr>
+  <tr><td>Screenshots</td><td>Pictures/FWDGCS/</td><td>~/Pictures/FWDGCS/</td></tr>
+  <tr><td>Recordings</td><td>Videos/FWDGCS/</td><td>~/Videos/FWDGCS/</td></tr>
+</table>
+
+<p><strong>Telemetry Logs:</strong> FWDGCS automatically logs all MAVLink telemetry while connected. Format: .tlog. One file per session. Naming: YYYY-MM-DD_HH-MM-SS_vehiclename.tlog.</p>
+
+<p><strong>Viewing Logs:</strong> Switch to Analyze View (Ctrl+4), click Open Log, select a .tlog file. Use playback controls (Play, Pause, Speed, Timeline).</p>
+
+<p><strong>Crash Reports:</strong> If FWDGCS crashes, a report dialog appears on next launch. Click Send Report to transmit anonymized crash data.</p>
+
+<div class="screenshot">
+  <div class="placeholder">[Screenshot: Analyze view with telemetry log]</div>
+</div>
+
+<!-- ==================== 8 TROUBLESHOOTING ==================== -->
+<h1>Troubleshooting</h1>
+
+<h2>Common Errors</h2>
+
+<h3>Unable to Connect to Data Link</h3>
+<ol>
+  <li>Ensure the air unit is properly connected to your flight controller</li>
+  <li>Check wiring: TX/RX properly crossed? Data Link configuration correct?</li>
+  <li>In the app, check Link Information — Data Link Downlink should be > 0</li>
+  <li>Check Data Transmission Settings: connection method and baud rate correct?</li>
+  <li>Try switching data cable to TELEM 1 or TELEM 2 port</li>
+  <li>Are both ground station and sky end running latest firmware?</li>
+  <li>If using wireless hotspot for UDP, disable computer Ethernet</li>
+</ol>
+
+<h3>Unable to Display Image</h3>
+<ol>
+  <li><strong>Check connection:</strong> Ground and sky end properly synced (green status indicator)? Camera correctly connected to sky end?</li>
+  <li><strong>Check software settings:</strong> Camera address field correctly set in app?</li>
+  <li><strong>Check network:</strong> If using handheld ground station, is Ethernet enabled in Android system settings?</li>
+</ol>
+
+<h3>Video Issues</h3>
+<table>
+  <tr><th>Issue</th><th>Solution</th></tr>
+  <tr><td>No video (black screen)</td><td>Verify source type/port/URL; check camera is powered</td></tr>
+  <tr><td>Video freezing</td><td>Reduce resolution; check network bandwidth</td></tr>
+  <tr><td>GStreamer errors</td><td>Install all GStreamer plugins (bad, ugly, good)</td></tr>
+  <tr><td>High CPU usage</td><td>Enable hardware decoding; reduce resolution</td></tr>
+</table>
+
+<h3>Connection Issues</h3>
+<table>
+  <tr><th>Issue</th><th>Solution</th></tr>
+  <tr><td>No heartbeat received</td><td>Check baud rate; verify autopilot power; check cable</td></tr>
+  <tr><td>Serial port not listed</td><td>Install USB-to-serial driver; check udev rules (Linux)</td></tr>
+  <tr><td>Radio not communicating</td><td>Verify radio pair; check power; test with another GCS</td></tr>
+  <tr><td>UDP/TCP connection refused</td><td>Check IP/port; disable firewall temporarily</td></tr>
+</table>
+
+<h2>Contact Support</h2>
+<p>Please contact FWD Defence for the latest updates and support.</p>
+
+<!-- ==================== 9 APPENDIX ==================== -->
+<h1>Appendix</h1>
+
+<h2>Glossary</h2>
+<table>
+  <tr><th>Term</th><th>Definition</th></tr>
+  <tr><td>AHRS</td><td>Attitude and Heading Reference System</td></tr>
+  <tr><td>APM</td><td>ArduPilot Mega — open-source autopilot firmware</td></tr>
+  <tr><td>ESC</td><td>Electronic Speed Controller</td></tr>
+  <tr><td>Failsafe</td><td>Automatic behaviour when parameter exceeds safe limits</td></tr>
+  <tr><td>GCS</td><td>Ground Control Station</td></tr>
+  <tr><td>HDOP</td><td>Horizontal Dilution of Precision — GPS accuracy measure</td></tr>
+  <tr><td>IMU</td><td>Inertial Measurement Unit</td></tr>
+  <tr><td>MAVLink</td><td>Micro Air Vehicle Link — communication protocol</td></tr>
+  <tr><td>PFD</td><td>Primary Flight Display</td></tr>
+  <tr><td>PWM</td><td>Pulse Width Modulation</td></tr>
+  <tr><td>RTK</td><td>Real-Time Kinematic — high-precision GPS</td></tr>
+  <tr><td>RTL</td><td>Return to Launch</td></tr>
+  <tr><td>VTOL</td><td>Vertical TakeOff and Landing</td></tr>
+</table>
+
+<h2>Keyboard Shortcuts</h2>
+<table class="shortcut-table">
+  <tr><th>Shortcut</th><th>Function</th></tr>
+  <tr><td>Ctrl+1</td><td>Fly View</td></tr>
+  <tr><td>Ctrl+2</td><td>Plan View</td></tr>
+  <tr><td>Ctrl+3</td><td>Setup View</td></tr>
+  <tr><td>Ctrl+4</td><td>Analyze View</td></tr>
+  <tr><td>Ctrl+F / F11</td><td>Toggle fullscreen</td></tr>
+  <tr><td>Ctrl+N</td><td>New plan</td></tr>
+  <tr><td>Ctrl+O</td><td>Open plan file</td></tr>
+  <tr><td>Ctrl+S</td><td>Save plan</td></tr>
+  <tr><td>Ctrl+Q</td><td>Quit</td></tr>
+  <tr><td>Ctrl+,</td><td>Settings</td></tr>
+  <tr><td>I</td><td>Arm</td></tr>
+  <tr><td>O</td><td>Disarm</td></tr>
+  <tr><td>Space</td><td>RTL (with confirmation)</td></tr>
+  <tr><td>R</td><td>Toggle recording</td></tr>
+  <tr><td>S</td><td>Snapshot</td></tr>
+  <tr><td>M</td><td>Mute/unmute</td></tr>
+  <tr><td>Delete</td><td>Delete selected waypoint</td></tr>
+  <tr><td>Home</td><td>Centre map on vehicle</td></tr>
+</table>
+
+<h2>Parameter Mapping</h2>
+
+<p><strong>ArduCopter 4.7.0 Firmware:</strong></p>
+<table class="param-table">
+  <tr><th>Quick Setting</th><th>Parameter</th></tr>
+  <tr><td>Throttle Fail-safe</td><td>FS_THR_ENABLE</td></tr>
+  <tr><td>Follow Mode Speed</td><td>WPNAV_SPEED</td></tr>
+  <tr><td>RTL Altitude</td><td>RTL_ALT</td></tr>
+  <tr><td>RTL Speed</td><td>RTL_SPEED</td></tr>
+  <tr><td>Loiter Acceleration</td><td>LOIT_ACC_MAX</td></tr>
+  <tr><td>Max Brake Speed</td><td>LOIT_BRK_ACCEL</td></tr>
+  <tr><td>Low Voltage</td><td>BATT_LOW_VOLT</td></tr>
+  <tr><td>Critical Low Voltage</td><td>BATT_CRT_VOLT</td></tr>
+  <tr><td>Low Voltage Behaviour</td><td>BATT_FS_LOW_ACT</td></tr>
+  <tr><td>Critical Low Voltage Behaviour</td><td>BATT_FS_CRT_ACT</td></tr>
+  <tr><td>Arm Voltage</td><td>BATT_ARM_VOLT</td></tr>
+</table>
+
+<p><strong>ArduPlane 4.7.0 Firmware:</strong></p>
+<table class="param-table">
+  <tr><th>Quick Setting</th><th>Parameter</th></tr>
+  <tr><td>Throttle Fail-safe</td><td>FS_LONG_ACTN</td></tr>
+  <tr><td>Cruise Airspeed</td><td>AIRSPEED_CRUISE</td></tr>
+  <tr><td>Max Airspeed</td><td>AIRSPEED_MAX</td></tr>
+  <tr><td>Min Airspeed</td><td>AIRSPEED_MIN</td></tr>
+  <tr><td>RTL Altitude</td><td>RTL_ALTITUDE</td></tr>
+  <tr><td>Low Voltage</td><td>BATT_LOW_VOLT</td></tr>
+  <tr><td>Critical Low Voltage</td><td>BATT_CRT_VOLT</td></tr>
+  <tr><td>Arm Voltage</td><td>BATT_ARM_VOLT</td></tr>
+</table>
+
+<h2>Version Update Log</h2>
+<table>
+  <tr><th>Version</th><th>Date</th><th>Updates</th></tr>
+  <tr><td>2.0</td><td>May 2026</td><td>Enhanced video controls; custom login system; FWD branding; safety parameters UI; code cleanup</td></tr>
+  <tr><td>1.0</td><td>Initial</td><td>Navy GCS baseline based on upstream QGC</td></tr>
+</table>
+
+<h2>After-Sales and Warranty</h2>
+<p>Please contact FWD Defence for after-sales and warranty information.</p>
+
+<div class="note-box">
+<strong>Note:</strong> For additional assistance, please contact FWD Defence support.
+</div>
+
+</body>
+</html>

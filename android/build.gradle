@@ -1,0 +1,71 @@
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.6.0'
+    }
+}
+repositories {
+    google()
+    jcenter()
+}
+apply plugin: 'com.android.application'
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
+    compileOnly fileTree(dir: '/home/fwd/Qt/5.15.2/android/jar', include: ['QtAndroid.jar'])
+}
+android {
+    compileSdkVersion androidCompileSdkVersion.toInteger()
+    buildToolsVersion '28.0.3'
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = [qt5AndroidDir + '/src', 'src', 'java']
+            java.excludes = ['org/qtproject/qt5/android/QtActivityDelegate.java',
+                 'org/qtproject/qt5/android/QtNative.java',
+                 'org/qtproject/qt5/android/QtLayout.java',
+                 'org/qtproject/qt5/android/QtInputConnection.java',
+                 'org/qtproject/qt5/android/QtSurface.java']
+            aidl.srcDirs = [qt5AndroidDir + '/src', 'src', 'aidl']
+            res.srcDirs = [qt5AndroidDir + '/res', 'res']
+            resources.srcDirs = ['resources']
+            renderscript.srcDirs = ['src']
+            assets.srcDirs = ['assets']
+            jniLibs.srcDirs = ['libs']
+       }
+    }
+    tasks.withType(JavaCompile) {
+        options.incremental = true
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    lintOptions {
+        abortOnError false
+    }
+    aaptOptions {
+        noCompress 'rcc'
+    }
+    
+    packagingOptions {
+        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
+        pickFirst 'lib/arm64-v8a/libc++_shared.so'
+        pickFirst 'lib/x86/libc++_shared.so'
+        pickFirst 'lib/x86_64/libc++_shared.so'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+    }
+    
+    defaultConfig {
+        resConfig "en"
+        minSdkVersion = qtMinSdkVersion
+        targetSdkVersion = qtTargetSdkVersion
+        multiDexEnabled true
+    }
+}
