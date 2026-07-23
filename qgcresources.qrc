@@ -152,6 +152,10 @@
         <file alias="dy_icon">resources/dynamic.png</file>
         <file alias="exe_icon">resources/execute.png</file>
          <file alias="edit">resources/editing.png</file>
+        <file alias="zt30_icon">resources/zt30.png</file>
+        <file alias="a8mini_icon">resources/a8mini.png</file>
+        <file alias="econ_icon">resources/econ.png</file>
+        <file alias="vadzo_icon">resources/vadzo.png</file>
         <file>resources/icons/qgroundcontrol.ico</file>
         <file>resources/icons/FWD_only_logo.ico</file>
     </qresource>

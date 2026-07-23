@@ -43,6 +43,8 @@ Item {
     property bool showVideoOptions: false
     property bool showThermalOptions: false
     property bool showColorCombo: false
+    property bool showCameraOptions: false
+    property string selectedCamera: ""
 
     property bool isThermalMode: false
 
@@ -92,19 +94,22 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.leftMargin: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth * 2 : ScreenTools.defaultFontPixelWidth * 5
-        anchors.topMargin: ScreenTools.defaultFontPixelWidth * 4
-        width: /*ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 3.4 :*/ rect1.width   // Rectangle size
-        height: width / 2.3
-        //radius: 5
+        anchors.topMargin: ScreenTools.defaultFontPixelWidth * 1.5
+        width: ScreenTools.defaultFontPixelWidth * 4.5
+        height: width
         visible: _root.isTheVideoFull && QGroundControl.videoManager.decoding
-        color: "#55ffffff"
+        color: "transparent"
+        radius: 10
+        border.color: "transparent"
+        border.width: 0
 
         QGCColoredImage {
             id: lhbut
             anchors.centerIn: parent
-            width: parent.width * 0.75
+            width: parent.width * 0.4
             height: width
             source: isLeftMenuVisible ? "/res/cheveron-up.svg" : "/res/cheveron-down.svg"
+            color: "#8a8aa3"
         }
 
         MouseArea {
@@ -116,6 +121,7 @@ Item {
                     showVideoOptions = false
                     showColorCombo = false
                     showGimbalControls = false
+                    showCameraOptions = false
                 } else {
                     isLeftMenuVisible = true
                 }
@@ -125,19 +131,17 @@ Item {
 
     Rectangle {
         id: rect1
-        color: "#55ffffff"
-        //anchors.top: parent.top
+        color: "#1a1a2e"
         anchors.top: hideRect.bottom
         anchors.left: parent.left
-        //anchors.topMargin: ScreenTools.defaultFontPixelWidth
-        anchors.topMargin: /*ScreenTools.defaultFontPixelWidth * 4*/ 12
+        anchors.topMargin: 6
         anchors.leftMargin: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth * 2 : ScreenTools.defaultFontPixelWidth * 5
-        width: ScreenTools.defaultFontPixelWidth * 8
-        implicitHeight: leftLayout.height + ScreenTools.defaultFontPixelHeight / 2
+        width: ScreenTools.defaultFontPixelWidth * 10
+        implicitHeight: leftLayout.height + ScreenTools.defaultFontPixelHeight * 1.5
         visible: _root.isTheVideoFull && QGroundControl.videoManager.decoding
         opacity: isLeftMenuVisible ? 1 : 0
         z: 999
-        //radius: ScreenTools.defaultFontPixelWidth
+        radius: 32
 
         Behavior on anchors.topMargin {
             NumberAnimation {
@@ -153,158 +157,448 @@ Item {
         ColumnLayout {
             id: leftLayout
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 0
+            spacing: ScreenTools.defaultFontPixelHeight / 4
             visible: isLeftMenuVisible && QGroundControl.videoManager.decoding
 
-            QGCToolBarButton {
-                z: 999
-                normalIconColor: "black"
-                text: "Track"
-                font.pointSize: 8
+            // Camera header
+            Item {
+                Layout.fillWidth: true
+                Layout.preferredHeight: cameraHeaderRow.height + ScreenTools.defaultFontPixelHeight * 0.5
 
-                icon.source: {
-                    switch (followState) {
-                    case 0: return "/res/ufIcon"
-                    case 1: return "/res/follow_icon"
-                    case 2: return "/res/hold_icon"
-                    }
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 8
+                    color: showCameraOptions ? "#23233d" : "transparent"
                 }
 
-                onClicked: {
-                    followState = (followState + 1) % 3
-                    console.log("Follow state", followState)
+                Column {
+                    id: cameraHeaderRow
+                    anchors.centerIn: parent
+                    spacing: -1
+                    width: parent.width
 
-                    _isTrackingEnabled = (followState !== 0)
-                    holdModeEnabled    = (followState === 2)
+                    Item {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: (selectedCamera === "ZT 30" || selectedCamera === "A8 Mini" || selectedCamera === "ECON" || selectedCamera === "WADZO") ? ScreenTools.defaultFontPixelHeight * 2.8 : ScreenTools.defaultFontPixelHeight * 1.5
+                        height: width
 
-                    if(followState === 0) {
-                        sendClearTrackPoint()
+                        QGCColoredImage {
+                            anchors.fill: parent
+                            visible: selectedCamera === "ZT 30"
+                            source: "/res/zt30_icon"
+                            color: "#ffffff"
+                            sourceSize.width: width * ScreenTools.devicePixelRatio
+                        }
+
+                        Image {
+                            anchors.fill: parent
+                            visible: selectedCamera === "A8 Mini" || selectedCamera === "ECON" || selectedCamera === "WADZO"
+                            source: selectedCamera === "A8 Mini" ? "/res/a8mini_icon" : selectedCamera === "ECON" ? "/res/econ_icon" : "/res/vadzo_icon"
+                            fillMode: Image.PreserveAspectFit
+                            sourceSize.width: width * ScreenTools.devicePixelRatio
+                            smooth: true
+                            mipmap: true
+                        }
+
+                        QGCColoredImage {
+                            anchors.fill: parent
+                            visible: selectedCamera !== "ZT 30" && selectedCamera !== "A8 Mini" && selectedCamera !== "ECON" && selectedCamera !== "WADZO"
+                            source: "/res/cam_icon"
+                            color: showCameraOptions ? "#ffffff" : "#8a8aa3"
+                            sourceSize.width: width * ScreenTools.devicePixelRatio
+                        }
                     }
 
-                    //sendTrackingStatus(followState)
+                    // QGCLabel {
+                    //     anchors.horizontalCenter: parent.horizontalCenter
+                    //     text: selectedCamera ? selectedCamera : "Cameras"
+                    //     font.pointSize: ScreenTools.defaultFontPointSize - 3
+                    //     font.bold: true
+                    //     color: showCameraOptions ? "#ffffff" : "#cfcfe0"
+                    // }
                 }
-            }
 
-            QGCToolBarButton {
-                id: gimbalButton
-                z: 999
-                normalIconColor: "black"
-                icon.source: "/res/gimbalIcon"
-                text: "Gimbal"
-                font.pointSize: 8
-                onClicked: {
-                    showThermalOptions = false
-                    showColorCombo = false
-                    if(showGimbalControls) {
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        showCameraOptions = !showCameraOptions
                         showGimbalControls = false
-                        showVideoOptions = false
+                        showThermalOptions = false
                         showColorCombo = false
-                    } else {
-                        showGimbalControls = true
-                        showVideoOptions = false
                     }
                 }
             }
 
-            // QGCToolBarButton {
-            //     id: switchButton
-            //     z: 999
-            //     icon.source: "/res/switchIcon"
-            //     normalIconColor: "black"
-            //     text: "Switch"
-            //     font.pointSize: 8
-            //     onClicked: {
-            //         if (showVideoOptions) {
-            //             showVideoOptions   = false
-            //             showThermalOptions = false
-            //             showColorCombo   = false
-            //             showGimbalControls = false
-            //         } else {
-            //             showVideoOptions = true
-            //             showGimbalControls = false
-            //         }
-            //     }
-            // }
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 0.5
+                Layout.rightMargin: ScreenTools.defaultFontPixelWidth * 0.5
+                height: 2
+                color: "#3a3a5c"
+            }
 
-            // QGCToolBarButton {
-            //     id: followingButton
-            //     z: 999
-            //     text: isFollowingTarget ? "Following" : "Follow"
-            //     font.pointSize: 6.5
-            //     icon.source: isFollowingTarget ? "/res/follow_target" :  "/res/unfollow_target"
-            //     normalIconColor: "black"
+            // A8 Mini toolbar
+            ColumnLayout {
+                visible: selectedCamera === "A8 Mini"
+                spacing: ScreenTools.defaultFontPixelHeight / 4
+                Layout.fillWidth: true
 
-            //     onClicked: {
-            //         if (_activeVehicle) {
-            //             //console.log("Available flight modes:", JSON.stringify(_activeVehicle.flightModes))
-            //            // console.log("Current flight mode:", _activeVehicle.flightMode)
-            //         }
-            //         if(!isFollowingTarget) {
-            //             isFollowingTarget = true
-            //             sendStartFollow(isFollowingTarget)
-            //             _activeVehicle.flightMode = "GUIDED"
-            //             // for (var key in _activeVehicle) {
-            //             //     console.log(key)
-            //             // }
+                QGCLabel {
+                    text: "A8 Mini"
+                    font.pointSize: ScreenTools.defaultFontPointSize - 1
+                    font.bold: true
+                    color: "#00d4aa"
+                    Layout.alignment: Qt.AlignHCenter
+                }
 
-            //         } else {
-            //             isFollowingTarget = false
-            //             sendStopFollow(isFollowingTarget)
-            //             _activeVehicle.flightMode = "LOITER"
-            //             // _activeVehicle.setFlightMode("Loiter")
-            //         }
-            //     }
-            // }
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 0.5
+                    Layout.rightMargin: ScreenTools.defaultFontPixelWidth * 0.5
+                    height: 2
+                    color: "#3a3a5c"
+                }
 
-            QGCToolBarButton {
-                id: centerButton
-                z: 999
-                icon.source: "/res/centerCam_icon"
-                normalIconColor: "black"
-                text: "Center"
-                font.pointSize: 8
-                onClicked: {
-                    sendSetCenter()
+                QGCToolBarButton {
+                    z: 999
+                    normalIconColor: "#8a8aa3"
+                    normalColor: "transparent"
+                    text: "Track"
+                    font.pointSize: 8
+                    icon.source: {
+                        switch (followState) {
+                        case 0: return "/res/ufIcon"
+                        case 1: return "/res/follow_icon"
+                        case 2: return "/res/hold_icon"
+                        }
+                    }
+                    onClicked: {
+                        followState = (followState + 1) % 3
+                        _isTrackingEnabled = (followState !== 0)
+                        holdModeEnabled    = (followState === 2)
+                        if(followState === 0) {
+                            sendClearTrackPoint()
+                        }
+                    }
+                }
+
+                QGCToolBarButton {
+                    z: 999
+                    normalIconColor: "#8a8aa3"
+                    normalColor: showGimbalControls ? "#00d4aa" : "transparent"
+                    icon.source: "/res/gimbalIcon"
+                    text: "Gimbal"
+                    font.pointSize: 8
+                    onClicked: {
+                        showCameraOptions = false
+                        showGimbalControls = !showGimbalControls
+                    }
+                }
+
+                QGCToolBarButton {
+                    z: 999
+                    normalIconColor: "#8a8aa3"
+                    normalColor: "transparent"
+                    icon.source: "/res/centerCam_icon"
+                    text: "Center"
+                    font.pointSize: 8
+                    onClicked: sendSetCenter()
                 }
             }
 
-            // QGCToolBarButton {
-            //     id: laserButton
-            //     z: 999
-            //     normalIconColor: "black"
-            //     icon.source: "/res/laser_icon"
-            //     text: isLaserOn ? "Laser On" : "Laser Off"
-            //     font.pointSize: 7
-            //     onClicked: {
-            //         if(isLaserOn) {
-            //             isLaserOn = false
-            //             if(isMeasureOn) {
-            //                 isMeasureOn = false
-            //             }
-            //             sendLaserStatus(isLaserOn)
-            //         } else {
-            //             isLaserOn = true
-            //             sendLaserStatus(isLaserOn)
-            //         }
+            // ZT 30 toolbar
+            ColumnLayout {
+                visible: selectedCamera === "ZT 30"
+                spacing: ScreenTools.defaultFontPixelHeight / 4
+                Layout.fillWidth: true
 
-            //         // isLaserOn = !isLaserOn
-            //         // sendLaserStatus(isLaserOn)
-            //     }
-            // }
+                QGCLabel {
+                    text: "ZT 30"
+                    font.pointSize: ScreenTools.defaultFontPointSize - 1
+                    font.bold: true
+                    color: "#00d4aa"
+                    Layout.alignment: Qt.AlignHCenter
+                }
 
-            // QGCToolBarButton {
-            //     id: measureButton
-            //     z: 999
-            //     normalIconColor: "black"
-            //     icon.source: "/res/measureIcon"
-            //     text: "Measure"
-            //     font.pointSize: 7
-            //     visible: isLaserOn
-            //     onClicked: {
-            //         isMeasureOn = !isMeasureOn
-            //         sendMeasure(isMeasureOn)
-            //     }
-            // }
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 0.5
+                    Layout.rightMargin: ScreenTools.defaultFontPixelWidth * 0.5
+                    height: 2
+                    color: "#3a3a5c"
+                }
+
+                QGCToolBarButton {
+                    z: 999
+                    normalIconColor: "#8a8aa3"
+                    normalColor: "transparent"
+                    text: "Track"
+                    font.pointSize: 8
+                    icon.source: {
+                        switch (followState) {
+                        case 0: return "/res/ufIcon"
+                        case 1: return "/res/follow_icon"
+                        case 2: return "/res/hold_icon"
+                        }
+                    }
+                    onClicked: {
+                        followState = (followState + 1) % 3
+                        _isTrackingEnabled = (followState !== 0)
+                        holdModeEnabled    = (followState === 2)
+                        if(followState === 0) {
+                            sendClearTrackPoint()
+                        }
+                    }
+                }
+
+                QGCToolBarButton {
+                    z: 999
+                    normalIconColor: "#8a8aa3"
+                    normalColor: showGimbalControls ? "#00d4aa" : "transparent"
+                    icon.source: "/res/gimbalIcon"
+                    text: "Gimbal"
+                    font.pointSize: 8
+                    onClicked: {
+                        showCameraOptions = false
+                        showGimbalControls = !showGimbalControls
+                    }
+                }
+
+                QGCToolBarButton {
+                    z: 999
+                    normalIconColor: "#8a8aa3"
+                    normalColor: "transparent"
+                    icon.source: "/res/centerCam_icon"
+                    text: "Center"
+                    font.pointSize: 8
+                    onClicked: sendSetCenter()
+                }
+
+                QGCToolBarButton {
+                    z: 999
+                    normalIconColor: "#8a8aa3"
+                    normalColor: "transparent"
+                    text: "Switch"
+                    font.pointSize: 8
+                    icon.source: "/res/switchIcon"
+                    onClicked: {
+                        if (showVideoOptions) {
+                            showVideoOptions   = false
+                            showThermalOptions = false
+                            showColorCombo   = false
+                            showGimbalControls = false
+                        } else {
+                            showVideoOptions = true
+                            showGimbalControls = false
+                        }
+                    }
+                }
+
+                QGCToolBarButton {
+                    z: 999
+                    normalIconColor: "#8a8aa3"
+                    normalColor: "transparent"
+                    text: "Follow"
+                    font.pointSize: 8
+                    icon.source: isFollowingTarget ? "/res/follow_target" :  "/res/unfollow_target"
+                    onClicked: {
+                        if (_activeVehicle) {
+                            //console.log("Available flight modes:", JSON.stringify(_activeVehicle.flightModes))
+                           // console.log("Current flight mode:", _activeVehicle.flightMode)
+                        }
+                        if(!isFollowingTarget) {
+                            isFollowingTarget = true
+                            sendStartFollow(isFollowingTarget)
+                            //_activeVehicle.flightMode = "GUIDED"
+                            // for (var key in _activeVehicle) {
+                            //     console.log(key)
+                            // }
+
+                        } else {
+                            isFollowingTarget = false
+                            sendStopFollow(isFollowingTarget)
+                           // _activeVehicle.flightMode = "LOITER"
+                            // _activeVehicle.setFlightMode("Loiter")
+                        }
+                    }
+                }
+
+                QGCToolBarButton {
+                    z: 999
+                    normalIconColor: "#8a8aa3"
+                    normalColor: "transparent"
+                    text: isLaserOn ? "Laser On" : "Laser Off"
+                    font.pointSize: 6
+                    icon.source: "/res/laser_icon"
+                    onClicked: {
+                        if(isLaserOn) {
+                            isLaserOn = false
+                            if(isMeasureOn) {
+                                isMeasureOn = false
+                            }
+                            sendLaserStatus(isLaserOn)
+                        } else {
+                            isLaserOn = true
+                            sendLaserStatus(isLaserOn)
+                        }
+
+                        // isLaserOn = !isLaserOn
+                        // sendLaserStatus(isLaserOn)
+                    }
+                }
+
+                QGCToolBarButton {
+                    id: measureButton
+                    z: 999
+                    normalIconColor: "#8a8aa3"
+                    icon.source: "/res/measureIcon"
+                    text: "Measure"
+                    font.pointSize: 7
+                    visible: isLaserOn
+                    onClicked: {
+                        isMeasureOn = !isMeasureOn
+                        sendMeasure(isMeasureOn)
+                    }
+                }
+            }
+
+            // WADZO toolbar
+            ColumnLayout {
+                visible: selectedCamera === "WADZO"
+                spacing: ScreenTools.defaultFontPixelHeight / 4
+                Layout.fillWidth: true
+
+                QGCLabel {
+                    text: "WADZO"
+                    font.pointSize: ScreenTools.defaultFontPointSize - 1
+                    font.bold: true
+                    color: "#00d4aa"
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 0.5
+                    Layout.rightMargin: ScreenTools.defaultFontPixelWidth * 0.5
+                    height: 2
+                    color: "#3a3a5c"
+                }
+
+                QGCToolBarButton {
+                    z: 999
+                    normalIconColor: "#8a8aa3"
+                    normalColor: "transparent"
+                    text: "Track"
+                    font.pointSize: 8
+                    icon.source: {
+                        switch (followState) {
+                        case 0: return "/res/ufIcon"
+                        case 1: return "/res/follow_icon"
+                        case 2: return "/res/hold_icon"
+                        }
+                    }
+                    onClicked: {
+                        followState = (followState + 1) % 3
+                        _isTrackingEnabled = (followState !== 0)
+                        holdModeEnabled    = (followState === 2)
+                        if(followState === 0) {
+                            sendClearTrackPoint()
+                        }
+                    }
+                }
+
+                QGCToolBarButton {
+                    z: 999
+                    normalIconColor: "#8a8aa3"
+                    normalColor: showGimbalControls ? "#00d4aa" : "transparent"
+                    icon.source: "/res/gimbalIcon"
+                    text: "Gimbal"
+                    font.pointSize: 8
+                    onClicked: {
+                        showCameraOptions = false
+                        showGimbalControls = !showGimbalControls
+                    }
+                }
+
+                QGCToolBarButton {
+                    z: 999
+                    normalIconColor: "#8a8aa3"
+                    normalColor: "transparent"
+                    icon.source: "/res/centerCam_icon"
+                    text: "Center"
+                    font.pointSize: 8
+                    onClicked: sendSetCenter()
+                }
+            }
+
+            // ECON toolbar
+            ColumnLayout {
+                visible: selectedCamera === "ECON"
+                spacing: ScreenTools.defaultFontPixelHeight / 4
+                Layout.fillWidth: true
+
+                QGCLabel {
+                    text: "ECON"
+                    font.pointSize: ScreenTools.defaultFontPointSize - 1
+                    font.bold: true
+                    color: "#00d4aa"
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 0.5
+                    Layout.rightMargin: ScreenTools.defaultFontPixelWidth * 0.5
+                    height: 2
+                    color: "#3a3a5c"
+                }
+
+                QGCToolBarButton {
+                    z: 999
+                    normalIconColor: "#8a8aa3"
+                    normalColor: "transparent"
+                    text: "Track"
+                    font.pointSize: 8
+                    icon.source: {
+                        switch (followState) {
+                        case 0: return "/res/ufIcon"
+                        case 1: return "/res/follow_icon"
+                        case 2: return "/res/hold_icon"
+                        }
+                    }
+                    onClicked: {
+                        followState = (followState + 1) % 3
+                        _isTrackingEnabled = (followState !== 0)
+                        holdModeEnabled    = (followState === 2)
+                        if(followState === 0) {
+                            sendClearTrackPoint()
+                        }
+                    }
+                }
+
+                QGCToolBarButton {
+                    z: 999
+                    normalIconColor: "#8a8aa3"
+                    normalColor: showGimbalControls ? "#00d4aa" : "transparent"
+                    icon.source: "/res/gimbalIcon"
+                    text: "Gimbal"
+                    font.pointSize: 8
+                    onClicked: {
+                        showCameraOptions = false
+                        showGimbalControls = !showGimbalControls
+                    }
+                }
+
+                QGCToolBarButton {
+                    z: 999
+                    normalIconColor: "#8a8aa3"
+                    normalColor: "transparent"
+                    icon.source: "/res/centerCam_icon"
+                    text: "Center"
+                    font.pointSize: 8
+                    onClicked: sendSetCenter()
+                }
+            }
         }
     }
 
@@ -312,299 +606,400 @@ Item {
         id: gimbalPopup
         visible: showGimbalControls && _root.isTheVideoFull && QGroundControl.videoManager.decoding
         z: 1000
-        radius: ScreenTools.defaultFontPixelWidth
-        color: "#55ffffff"
-        width: ScreenTools.defaultFontPixelWidth * 8
-        implicitHeight: gimLay.height + ScreenTools.defaultFontPixelHeight
+        radius: 10
+        color: "#1a1a2e"
+        width: ScreenTools.defaultFontPixelWidth * 10
+        implicitHeight: gimLay.height + ScreenTools.defaultFontPixelHeight * 2
         anchors.left: rect1.right
-        anchors.top: parent.top
-        anchors.topMargin: ScreenTools.defaultFontPixelHeight * 5
-        //anchors.verticalCenter: gimbalButton.verticalCenter
-        anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+        anchors.top: rect1.top
+        anchors.leftMargin: 6
 
         ColumnLayout {
             id: gimLay
             anchors.centerIn: parent
             anchors.margins: ScreenTools.defaultFontPixelWidth
+            spacing: ScreenTools.defaultFontPixelHeight / 4
 
             QGCToolBarButton {
                 icon.source: "/res/arrowUp"
-                normalIconColor: "black"
+                normalIconColor: "#8a8aa3"
+                normalColor: "transparent"
                 onPressed: sendGimbalUp()
                 onReleased: sendStopGimbal()
             }
 
             QGCToolBarButton {
                 icon.source: "/res/arrowDown"
-                normalIconColor: "black"
+                normalIconColor: "#8a8aa3"
+                normalColor: "transparent"
                 onPressed: sendGimbalDown()
                 onReleased: sendStopGimbal()
             }
 
             QGCToolBarButton {
                 icon.source: "/res/arrowLeft"
-                normalIconColor: "black"
+                normalIconColor: "#8a8aa3"
+                normalColor: "transparent"
                 onPressed: sendGimbalLeft()
                 onReleased: sendStopGimbal()
             }
 
             QGCToolBarButton {
                 icon.source: "/res/arrowRight"
-                normalIconColor: "black"
+                normalIconColor: "#8a8aa3"
+                normalColor: "transparent"
                 onPressed: sendGimbalRight()
                 onReleased: sendStopGimbal()
             }
         }
     }
 
-    // Rectangle {
-    //     id: videoPopup
-    //     visible: showVideoOptions && _root.isTheVideoFull && QGroundControl.videoManager.decoding
-    //     z: 1000
-    //     radius: ScreenTools.defaultFontPixelWidth
-    //     color: "#55ffffff"
-    //     width: ScreenTools.defaultFontPixelWidth * 9
-    //     height: ScreenTools.defaultFontPixelHeight * 18
-    //     //implicitHeight: vidLay.height + ScreenTools.defaultFontPixelHeight
-    //     anchors.left: rect1.right
-    //     anchors.top: parent.top
-    //     anchors.topMargin: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth * 15 : ScreenTools.defaultFontPixelWidth * 21
-    //     //anchors.verticalCenter: switchButton.verticalCenter
-    //     anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+    Rectangle {
+        id: cameraPopup
+        visible: showCameraOptions && _root.isTheVideoFull && QGroundControl.videoManager.decoding
+        z: 1000
+        radius: 10
+        color: "#1a1a2e"
+        width: ScreenTools.defaultFontPixelWidth * 18
+        implicitHeight: cameraLayout.height + ScreenTools.defaultFontPixelHeight * 2
+        anchors.left: rect1.right
+        anchors.top: rect1.top
+        anchors.leftMargin: 6
 
-    //     Flickable {
-    //         id: flick
-    //         anchors.fill: parent
-    //         contentWidth: width
-    //         contentHeight: vidLay.implicitHeight
-    //         clip: true
-    //         interactive: contentHeight > height
+        ColumnLayout {
+            id: cameraLayout
+            anchors.centerIn: parent
+            anchors.margins: ScreenTools.defaultFontPixelWidth * 1.5
+            spacing: ScreenTools.defaultFontPixelHeight / 3
 
-    //         ColumnLayout {
-    //             id: vidLay
-    //             width: flick.width
-    //             anchors.horizontalCenter: parent.horizontalCenter
-    //             spacing: 0
+            QGCLabel {
+                text: "Cameras"
+                font.pointSize: ScreenTools.defaultFontPointSize
+                font.bold: true
+                color: "#cfcfe0"
+                Layout.alignment: Qt.AlignHCenter
+            }
 
-    //             QGCToolBarButton {
-    //                 icon.source: "/res/zoomCamIcon"
-    //                 text: "Zoom"
-    //                 normalIconColor: "black"
-    //                 Layout.alignment: Qt.AlignHCenter
-    //                 font.pointSize: 7
-    //                 property int camNum: 3
+            Rectangle {
+                Layout.fillWidth: true
+                height: 1
+                color: "#23233d"
+                opacity: 0.8
+            }
 
-    //                 onClicked: {
-    //                     isThermalMode = false
-    //                     showThermalOptions = false
-    //                     videoMode = "Zoom"
-    //                     sendSwitchVideo(camNum)
-    //                 }
-    //             }
+            QGCToolBarButton {
+                text: "A8 Mini"
+                font.pointSize: 8
+                logo: true
+                //iconSize: ScreenTools.defaultFontPixelHeight * 3
+                icon.source: "/res/a8mini_icon"
+                normalIconColor: "#8a8aa3"
+                normalColor: selectedCamera === "A8 Mini" ? "#23233d" : "transparent"
+                Layout.fillWidth: true
+                onClicked: {
+                    selectedCamera = "A8 Mini"
+                    showCameraOptions = false
+                   // console.log("Selected camera: A8 Mini")
+                }
+            }
 
-    //             QGCToolBarButton {
-    //                 icon.source: "/res/arrowUp"
-    //                 normalIconColor: "black"
-    //                 text: "S_Z-W"
-    //                 Layout.alignment: Qt.AlignHCenter
-    //                 visible: false
-    //                 font.pointSize: 7
-    //                 property int camNum: 4
+            QGCToolBarButton {
+                text: "ZT 30"
+                font.pointSize: 8
+                //iconSize: ScreenTools.defaultFontPixelHeight * 3
+                icon.source: "/res/zt30_icon"
+                normalIconColor: "#ffffff"
+                normalColor: selectedCamera === "ZT 30" ? "#23233d" : "transparent"
+                Layout.fillWidth: true
+                onClicked: {
+                    selectedCamera = "ZT 30"
+                    showCameraOptions = false
+                    //console.log("Selected camera: ZT 30")
+                }
+            }
 
-    //                 onClicked: {
-    //                     isThermalMode = false
-    //                     showThermalOptions = false
-    //                     sendSwitchVideo(camNum)
-    //                 }
-    //             }
+            // QGCToolBarButton {
+            //     text: "WADZO"
+            //     font.pointSize: 8
+            //     logo: true
+            //     //iconSize: ScreenTools.defaultFontPixelHeight * 3
+            //     icon.source: "/res/vadzo_icon"
+            //     normalIconColor: "#8a8aa3"
+            //     normalColor: selectedCamera === "WADZO" ? "#23233d" : "transparent"
+            //     Layout.fillWidth: true
+            //     onClicked: {
+            //         selectedCamera = "WADZO"
+            //         showCameraOptions = false
+            //         //console.log("Selected camera: WADZO")
+            //     }
+            // }
 
-    //             QGCToolBarButton {
-    //                 //anchors.fill: parent
-    //                 text: "Wide"
-    //                 icon.source: "/res/wideCamIcon"
-    //                 normalIconColor: "black"
-    //                 Layout.alignment: Qt.AlignHCenter
-    //                 font.pointSize: 7
-    //                 property int camNum: 5
+            // QGCToolBarButton {
+            //     text: "ECON"
+            //     font.pointSize: 8
+            //     logo: true
+            //     //iconSize: ScreenTools.defaultFontPixelHeight * 3
+            //     icon.source: "/res/econ_icon"
+            //     normalIconColor: "#8a8aa3"
+            //     normalColor: selectedCamera === "ECON" ? "#23233d" : "transparent"
+            //     Layout.fillWidth: true
+            //     onClicked: {
+            //         selectedCamera = "ECON"
+            //         showCameraOptions = false
+            //         //console.log("Selected camera: ECON")
+            //     }
+            // }
+        }
+    }
 
-    //                 onClicked: {
-    //                     isThermalMode = false
-    //                     showThermalOptions = false
-    //                     videoMode = "Wide"
-    //                     sendSwitchVideo(camNum)
-    //                 }
-    //             }
+    Rectangle {
+        id: videoPopup
+        visible: showVideoOptions && _root.isTheVideoFull && QGroundControl.videoManager.decoding
+        z: 1000
+        radius: ScreenTools.defaultFontPixelWidth
+        color: "#55ffffff"
+        width: ScreenTools.defaultFontPixelWidth * 9
+        height: ScreenTools.defaultFontPixelHeight * 18
+        //implicitHeight: vidLay.height + ScreenTools.defaultFontPixelHeight
+        anchors.left: rect1.right
+        anchors.top: parent.top
+        anchors.topMargin: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth * 15 : ScreenTools.defaultFontPixelWidth * 21
+        //anchors.verticalCenter: switchButton.verticalCenter
+        anchors.leftMargin: ScreenTools.defaultFontPixelWidth
 
-    //             QGCToolBarButton {
-    //                 icon.source: "/res/arrowUp"
-    //                 normalIconColor: "black"
-    //                 text: "S_W-Z"
-    //                 Layout.alignment: Qt.AlignHCenter
-    //                 visible: false
-    //                 font.pointSize: 7
-    //                 property int camNum: 6
+        Flickable {
+            id: flick
+            anchors.fill: parent
+            contentWidth: width
+            contentHeight: vidLay.implicitHeight
+            clip: true
+            interactive: contentHeight > height
 
-    //                 onClicked: {
-    //                     isThermalMode = false
-    //                     showThermalOptions = false
-    //                     sendSwitchVideo(camNum)
-    //                 }
-    //             }
+            ColumnLayout {
+                id: vidLay
+                width: flick.width
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 0
 
-    //             QGCToolBarButton {
-    //                 icon.source: "/res/therCamIcon"
-    //                 normalIconColor: "black"
-    //                 text: "Thermal"
-    //                 Layout.alignment: Qt.AlignHCenter
-    //                 font.pointSize: 7
-    //                 property int camNum: 7
+                QGCToolBarButton {
+                    icon.source: "/res/zoomCamIcon"
+                    text: "Zoom"
+                    normalIconColor: "black"
+                    Layout.alignment: Qt.AlignHCenter
+                    font.pointSize: 7
+                    property int camNum: 3
 
-    //                 onClicked: {
-    //                     if(showThermalOptions) {
-    //                         videoMode = "Thermal"
-    //                         showThermalOptions = false
-    //                         showColorCombo = false
-    //                         isThermalMode = true
-    //                         showColorCombo = false
-    //                         sendSwitchVideo(camNum)
-    //                     } else {
-    //                         showThermalOptions = true
-    //                     }
-    //                 }
-    //             }
+                    onClicked: {
+                        isThermalMode = false
+                        showThermalOptions = false
+                        videoMode = "Zoom"
+                        sendSwitchVideo(camNum)
+                    }
+                }
 
-    //             QGCToolBarButton {
-    //                 icon.source: "/res/arrowUp"
-    //                 normalIconColor: "black"
-    //                 text: "S_T-W"
-    //                 Layout.alignment: Qt.AlignHCenter
-    //                 visible: false
-    //                 font.pointSize: 7
-    //                 property int camNum: 8
+                QGCToolBarButton {
+                    icon.source: "/res/arrowUp"
+                    normalIconColor: "black"
+                    text: "S_Z-W"
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: false
+                    font.pointSize: 7
+                    property int camNum: 4
 
-    //                 onClicked: {
-    //                     isThermalMode = false
-    //                     showThermalOptions = false
-    //                     sendSwitchVideo(camNum)
-    //                 }
-    //             }
+                    onClicked: {
+                        isThermalMode = false
+                        showThermalOptions = false
+                        sendSwitchVideo(camNum)
+                    }
+                }
 
-    //             QGCToolBarButton {
-    //                 icon.source: "/res/ztIcon"
-    //                 text: "Zoom-Th"
-    //                 normalIconColor: "black"
-    //                 Layout.alignment: Qt.AlignHCenter
-    //                 font.pointSize: 7
-    //                 property int camNum: 0
+                QGCToolBarButton {
+                    //anchors.fill: parent
+                    text: "Wide"
+                    icon.source: "/res/wideCamIcon"
+                    normalIconColor: "black"
+                    Layout.alignment: Qt.AlignHCenter
+                    font.pointSize: 7
+                    property int camNum: 5
 
-    //                 onClicked: {
-    //                     videoMode = "Zoom - Thermal"
-    //                     isThermalMode = false
-    //                     showThermalOptions = false
-    //                     sendSwitchVideo(camNum)
-    //                 }
-    //             }
+                    onClicked: {
+                        isThermalMode = false
+                        showThermalOptions = false
+                        videoMode = "Wide"
+                        sendSwitchVideo(camNum)
+                    }
+                }
 
-    //             QGCToolBarButton {
-    //                 icon.source: "/res/wtIcon"
-    //                 text: "Wide_Th"
-    //                 normalIconColor: "black"
-    //                 Layout.alignment: Qt.AlignHCenter
-    //                 font.pointSize: 7
-    //                 property int camNum: 1
+                QGCToolBarButton {
+                    icon.source: "/res/arrowUp"
+                    normalIconColor: "black"
+                    text: "S_W-Z"
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: false
+                    font.pointSize: 7
+                    property int camNum: 6
 
-    //                 onClicked: {
-    //                     videoMode = "Wide - Thermal"
-    //                     isThermalMode = false
-    //                     showThermalOptions = false
-    //                     sendSwitchVideo(camNum)
-    //                 }
-    //             }
+                    onClicked: {
+                        isThermalMode = false
+                        showThermalOptions = false
+                        sendSwitchVideo(camNum)
+                    }
+                }
 
-    //             QGCToolBarButton {
-    //                 icon.source: "/res/zoomCamIcon"
-    //                 text: "Zoom-Wide"
-    //                 normalIconColor: "black"
-    //                 Layout.alignment: Qt.AlignHCenter
-    //                 font.pointSize: 7
-    //                 property int camNum: 2
+                QGCToolBarButton {
+                    icon.source: "/res/therCamIcon"
+                    normalIconColor: "black"
+                    text: "Thermal"
+                    Layout.alignment: Qt.AlignHCenter
+                    font.pointSize: 7
+                    property int camNum: 7
 
-    //                 onClicked: {
-    //                     videoMode = "Zoom - Wide"
-    //                     isThermalMode = false
-    //                     showThermalOptions = false
-    //                     sendSwitchVideo(camNum)
-    //                 }
-    //             }
-    //         }
-    //    }
-    //}
+                    onClicked: {
+                        if(showThermalOptions) {
+                            videoMode = "Thermal"
+                            showThermalOptions = false
+                            showColorCombo = false
+                            isThermalMode = true
+                            showColorCombo = false
+                            sendSwitchVideo(camNum)
+                        } else {
+                            showThermalOptions = true
+                        }
+                    }
+                }
 
-    // Rectangle {
-    //     id: thermalPopup
-    //     visible: showThermalOptions && QGroundControl.videoManager.decoding && _root.isTheVideoFull
-    //     z: 1000
-    //     radius: ScreenTools.defaultFontPixelWidth
-    //     color: "#55ffffff"
-    //     width: ScreenTools.defaultFontPixelWidth * 8
-    //     height: ScreenTools.defaultFontPixelHeight * 11
-    //     anchors.left: videoPopup.right
-    //     anchors.top: parent.top
-    //     anchors.topMargin: ScreenTools.defaultFontPixelWidth * 32
-    //     //anchors.verticalCenter: switchButton.verticalCenter
-    //     anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+                QGCToolBarButton {
+                    icon.source: "/res/arrowUp"
+                    normalIconColor: "black"
+                    text: "S_T-W"
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: false
+                    font.pointSize: 7
+                    property int camNum: 8
 
-    //     Flickable {
-    //         id: thermFlick
-    //         anchors.fill: parent
-    //         contentWidth: width
-    //         contentHeight: thermalLay.implicitHeight
-    //         clip: true
-    //         interactive: contentHeight > height
+                    onClicked: {
+                        isThermalMode = false
+                        showThermalOptions = false
+                        sendSwitchVideo(camNum)
+                    }
+                }
 
-    //         ColumnLayout {
-    //             id: thermalLay
-    //             width: thermFlick.width
-    //             anchors.horizontalCenter: parent.horizontalCenter
-    //             spacing: 0
+                QGCToolBarButton {
+                    icon.source: "/res/ztIcon"
+                    text: "Zoom-Th"
+                    normalIconColor: "black"
+                    Layout.alignment: Qt.AlignHCenter
+                    font.pointSize: 7
+                    property int camNum: 0
 
-    //                 QGCToolBarButton {
-    //                 id: colorButton
-    //                 icon.source: "/res/colorIcon"
-    //                 text: "Color"
-    //                 normalIconColor: "black"
-    //                 Layout.alignment: Qt.AlignHCenter
-    //                 font.pointSize: 7
+                    onClicked: {
+                        videoMode = "Zoom - Thermal"
+                        isThermalMode = false
+                        showThermalOptions = false
+                        sendSwitchVideo(camNum)
+                    }
+                }
 
-    //                 onClicked: {
-    //                     showColorCombo = !showColorCombo
-    //                 }
-    //             }
+                QGCToolBarButton {
+                    icon.source: "/res/wtIcon"
+                    text: "Wide_Th"
+                    normalIconColor: "black"
+                    Layout.alignment: Qt.AlignHCenter
+                    font.pointSize: 7
+                    property int camNum: 1
 
-    //             QGCToolBarButton {
-    //                 icon.source: "/res/gainIcon"
-    //                 text: "Gain"
-    //                 normalIconColor: "black"
-    //                 Layout.alignment: Qt.AlignHCenter
-    //                 font.pointSize: 7
-    //                 onClicked: {
-    //                     showColorCombo = false
-    //                 }
-    //             }
+                    onClicked: {
+                        videoMode = "Wide - Thermal"
+                        isThermalMode = false
+                        showThermalOptions = false
+                        sendSwitchVideo(camNum)
+                    }
+                }
 
-    //             QGCToolBarButton {
-    //                 icon.source: "/res/tempIcon"
-    //                 text: "Temp"
-    //                 normalIconColor: "black"
-    //                 Layout.alignment: Qt.AlignHCenter
-    //                 font.pointSize: 7
-    //                 onClicked: {
-    //                     showColorCombo = false
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
+                QGCToolBarButton {
+                    icon.source: "/res/zoomCamIcon"
+                    text: "Zoom-Wide"
+                    normalIconColor: "black"
+                    Layout.alignment: Qt.AlignHCenter
+                    font.pointSize: 7
+                    property int camNum: 2
+
+                    onClicked: {
+                        videoMode = "Zoom - Wide"
+                        isThermalMode = false
+                        showThermalOptions = false
+                        sendSwitchVideo(camNum)
+                    }
+                }
+            }
+       }
+    }
+
+    Rectangle {
+        id: thermalPopup
+        visible: showThermalOptions && QGroundControl.videoManager.decoding && _root.isTheVideoFull
+        z: 1000
+        radius: ScreenTools.defaultFontPixelWidth
+        color: "#55ffffff"
+        width: ScreenTools.defaultFontPixelWidth * 8
+        height: ScreenTools.defaultFontPixelHeight * 11
+        anchors.left: videoPopup.right
+        anchors.top: parent.top
+        anchors.topMargin: ScreenTools.defaultFontPixelWidth * 32
+        //anchors.verticalCenter: switchButton.verticalCenter
+        anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+
+        Flickable {
+            id: thermFlick
+            anchors.fill: parent
+            contentWidth: width
+            contentHeight: thermalLay.implicitHeight
+            clip: true
+            interactive: contentHeight > height
+
+            ColumnLayout {
+                id: thermalLay
+                width: thermFlick.width
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 0
+
+                    QGCToolBarButton {
+                    id: colorButton
+                    icon.source: "/res/colorIcon"
+                    text: "Color"
+                    normalIconColor: "black"
+                    Layout.alignment: Qt.AlignHCenter
+                    font.pointSize: 7
+
+                    onClicked: {
+                        showColorCombo = !showColorCombo
+                    }
+                }
+
+                QGCToolBarButton {
+                    icon.source: "/res/gainIcon"
+                    text: "Gain"
+                    normalIconColor: "black"
+                    Layout.alignment: Qt.AlignHCenter
+                    font.pointSize: 7
+                    onClicked: {
+                        showColorCombo = false
+                    }
+                }
+
+                QGCToolBarButton {
+                    icon.source: "/res/tempIcon"
+                    text: "Temp"
+                    normalIconColor: "black"
+                    Layout.alignment: Qt.AlignHCenter
+                    font.pointSize: 7
+                    onClicked: {
+                        showColorCombo = false
+                    }
+                }
+            }
+        }
+    }
 
     // VideoControls {
     //     anchors.top: parent.top
@@ -620,20 +1015,23 @@ Item {
         z: 1000
         anchors.top: parent.top
         anchors.right: parent.right
-        anchors.rightMargin: ScreenTools.defaultFontPixelWidth * 5
-        anchors.topMargin: ScreenTools.defaultFontPixelWidth * 4
-        width: /*ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 3.4 : */fstRect.width   // Rectangle size
-        height: width / 2.3
-        //radius: 5
+        anchors.rightMargin: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth * 2 : ScreenTools.defaultFontPixelWidth * 5
+        anchors.topMargin: ScreenTools.defaultFontPixelWidth * 1.5
+        width: ScreenTools.defaultFontPixelWidth * 4.5
+        height: width
         visible: _root.isTheVideoFull && QGroundControl.videoManager.decoding
-        color: "#55ffffff"
+        color: "transparent"
+        radius: 10
+        border.color: "transparent"
+        border.width: 0
 
         QGCColoredImage {
             id: rhbut
-            anchors.centerIn: parent       // Center inside rectangle
-            width: parent.width * 0.75    // Button size smaller than rectangle
+            anchors.centerIn: parent
+            width: parent.width * 0.4
             height: width
             source: isRightMenuVisible ? "/res/cheveron-up.svg" : "/res/cheveron-down.svg"
+            color: "#8a8aa3"
         }
 
         MouseArea {
@@ -651,18 +1049,17 @@ Item {
 
     Rectangle {
         id: fstRect
-        color:      /*qgcPal.toolbarBackground*/ "#55ffffff"
-        //anchors.top: parent.top
+        color: "#1a1a2e"
         anchors.top: hideRightRect.bottom
         anchors.right: parent.right
-        anchors.topMargin:/* ScreenTools.defaultFontPixelWidth * 6*/ 12
-        anchors.rightMargin: ScreenTools.defaultFontPixelWidth * 5
-        width: ScreenTools.defaultFontPixelWidth * 8
-        implicitHeight: rightLayout.height + ScreenTools.defaultFontPixelHeight
+        anchors.topMargin: 6
+        anchors.rightMargin: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth * 2 : ScreenTools.defaultFontPixelWidth * 5
+        width: ScreenTools.defaultFontPixelWidth * 10
+        implicitHeight: rightLayout.height + ScreenTools.defaultFontPixelHeight * 1.5
         visible: _root.isTheVideoFull && QGroundControl.videoManager.decoding
         opacity: isRightMenuVisible ? 1 : 0
         z: 999
-        //radius: ScreenTools.defaultFontPixelWidth
+        radius: 32
 
         Behavior on anchors.topMargin {
             NumberAnimation {
@@ -678,14 +1075,15 @@ Item {
         ColumnLayout {
             id: rightLayout
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 0
+            spacing: ScreenTools.defaultFontPixelHeight / 4
             visible: isRightMenuVisible && QGroundControl.videoManager.decoding
 
             QGCToolBarButton {
                 id: takePhotoButton
                 z: 999
                 icon.source: "/res/cam_icon"
-                normalIconColor: "black"
+                normalIconColor: "#8a8aa3"
+                normalColor: "transparent"
                 text: "Photo"
                 font.pointSize: 8
                 onClicked: sendTakePhoto()
@@ -697,7 +1095,8 @@ Item {
                 text: "Video"
                 font.pointSize: 8
                 icon.source: isStartTakeVideo ? "/res/videoStop_icon" : "/res/play_icon"
-                normalIconColor: "black"
+                normalIconColor: "#8a8aa3"
+                normalColor: isStartTakeVideo ? "#00d4aa" : "transparent"
 
                 onClicked: {
                     if(!isStartTakeVideo) {
@@ -706,14 +1105,14 @@ Item {
                     } else {
                         isStartTakeVideo = false
                         sendStopTakeVideo()
-                        //QGroundControl.saveVideo()
                     }
                 }
             }
 
             QGCToolBarButton {
                 icon.source: "/res/zin_icon"
-                normalIconColor: "black"
+                normalIconColor: "#8a8aa3"
+                normalColor: "transparent"
                 text: "Z-IN"
                 font.pointSize: 8
                 onPressed: sendZoomIn()
@@ -722,7 +1121,8 @@ Item {
 
             QGCToolBarButton {
                 icon.source: "/res/zout_icon"
-                normalIconColor: "black"
+                normalIconColor: "#8a8aa3"
+                normalColor: "transparent"
                 text: "Z-OUT"
                 font.pointSize: 8
                 onPressed: sendZoomOut()
@@ -735,7 +1135,8 @@ Item {
                 text: "Clear"
                 font.pointSize: 8
                 icon.source: "/res/clearIcon"
-                normalIconColor: "black"
+                normalIconColor: "#8a8aa3"
+                normalColor: "transparent"
 
                 onClicked: {
                     sendClearTrackPoint()
@@ -748,7 +1149,8 @@ Item {
                 text: "Full Scr"
                 font.pointSize: 8
                 icon.source: "/res/fs_icon"
-                normalIconColor: "black"
+                normalIconColor: "#8a8aa3"
+                normalColor: "transparent"
 
                 onClicked: {
                     QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
