@@ -58,4 +58,5 @@ void SettingsManager::setToolbox(QGCToolbox *toolbox)
     _apmMavlinkStreamRateSettings = new APMMavlinkStreamRateSettings(this);
 #endif
     _remoteIDSettings =             new RemoteIDSettings            (this); 
+    _googleDriveSettings =          new GoogleDriveSettings         (this);
 }

@@ -30,6 +30,7 @@
 #include "GimbalControllerSettings.h"
 #include <QVariantList>
 #include "RemoteIDSettings.h"
+#include "GoogleDriveSettings.h"
 
 /// Provides access to all app settings
 class SettingsManager : public QGCTool
@@ -56,6 +57,7 @@ public:
     Q_PROPERTY(QObject* apmMavlinkStreamRateSettings    READ apmMavlinkStreamRateSettings   CONSTANT)
 #endif
     Q_PROPERTY(QObject* remoteIDSettings                READ remoteIDSettings               CONSTANT)
+    Q_PROPERTY(QObject* googleDriveSettings             READ googleDriveSettings            CONSTANT)
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
 
@@ -76,6 +78,7 @@ public:
     APMMavlinkStreamRateSettings*   apmMavlinkStreamRateSettings(void) { return _apmMavlinkStreamRateSettings; }
 #endif
     RemoteIDSettings*               remoteIDSettings            (void) { return _remoteIDSettings; }
+    GoogleDriveSettings*            googleDriveSettings         (void) { return _googleDriveSettings; }
 private:
     AppSettings*                    _appSettings;
     UnitsSettings*                  _unitsSettings;
@@ -94,6 +97,7 @@ private:
     APMMavlinkStreamRateSettings*   _apmMavlinkStreamRateSettings;
 #endif
     RemoteIDSettings*               _remoteIDSettings;
+    GoogleDriveSettings*            _googleDriveSettings;
 };
 
 #endif

@@ -30,6 +30,8 @@ class UASMessageHandler;
 class QGCPositionManager;
 class VideoManager;
 class MAVLinkLogManager;
+class LogDownloadController;
+class GoogleDriveManager;
 class QGCCorePlugin;
 class SettingsManager;
 class ADSBVehicleManager;
@@ -65,6 +67,8 @@ public:
     QGCPositionManager*         qgcPositionManager      () { return _qgcPositionManager; }
     VideoManager*               videoManager            () { return _videoManager; }
     MAVLinkLogManager*          mavlinkLogManager       () { return _mavlinkLogManager; }
+    LogDownloadController*      logDownloadController   () { return _logDownloadController; }
+    GoogleDriveManager*         googleDriveManager      () { return _googleDriveManager; }
     QGCCorePlugin*              corePlugin              () { return _corePlugin; }
     SettingsManager*            settingsManager         () { return _settingsManager; }
     ADSBVehicleManager*         adsbVehicleManager      () { return _adsbVehicleManager; }
@@ -105,6 +109,8 @@ private:
     QGCPositionManager*         _qgcPositionManager     = nullptr;
     VideoManager*               _videoManager           = nullptr;
     MAVLinkLogManager*          _mavlinkLogManager      = nullptr;
+    LogDownloadController*      _logDownloadController   = nullptr;
+    GoogleDriveManager*         _googleDriveManager      = nullptr;
     QGCCorePlugin*              _corePlugin             = nullptr;
     SettingsManager*            _settingsManager        = nullptr;
     ADSBVehicleManager*         _adsbVehicleManager     = nullptr;

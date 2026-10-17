@@ -7,9 +7,24 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
 
+//import "CameraState.js" as CameraState
+
 Item {
     id:         _root
     visible:    QGroundControl.videoManager.hasVideo
+
+    //property string selectedCamera: CameraState.selectedCamera
+
+    // Timer {
+    //     interval: 200
+    //     running: true
+    //     repeat: true
+    //     onTriggered: {
+    //         if (CameraState.selectedCamera !== selectedCamera) {
+    //             selectedCamera = CameraState.selectedCamera
+    //         }
+    //     }
+    // }
 
     property bool isTheVideoFull: false
 
@@ -43,8 +58,6 @@ Item {
     property bool showVideoOptions: false
     property bool showThermalOptions: false
     property bool showColorCombo: false
-    property bool showCameraOptions: false
-    property string selectedCamera: ""
 
     property bool isThermalMode: false
 
@@ -121,7 +134,6 @@ Item {
                     showVideoOptions = false
                     showColorCombo = false
                     showGimbalControls = false
-                    showCameraOptions = false
                 } else {
                     isLeftMenuVisible = true
                 }
@@ -165,12 +177,6 @@ Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: cameraHeaderRow.height + ScreenTools.defaultFontPixelHeight * 0.5
 
-                Rectangle {
-                    anchors.fill: parent
-                    radius: 8
-                    color: showCameraOptions ? "#23233d" : "transparent"
-                }
-
                 Column {
                     id: cameraHeaderRow
                     anchors.centerIn: parent
@@ -204,27 +210,9 @@ Item {
                             anchors.fill: parent
                             visible: selectedCamera !== "ZT 30" && selectedCamera !== "A8 Mini" && selectedCamera !== "ECON" && selectedCamera !== "WADZO"
                             source: "/res/cam_icon"
-                            color: showCameraOptions ? "#ffffff" : "#8a8aa3"
+                            color: "#8a8aa3"
                             sourceSize.width: width * ScreenTools.devicePixelRatio
                         }
-                    }
-
-                    // QGCLabel {
-                    //     anchors.horizontalCenter: parent.horizontalCenter
-                    //     text: selectedCamera ? selectedCamera : "Cameras"
-                    //     font.pointSize: ScreenTools.defaultFontPointSize - 3
-                    //     font.bold: true
-                    //     color: showCameraOptions ? "#ffffff" : "#cfcfe0"
-                    // }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        showCameraOptions = !showCameraOptions
-                        showGimbalControls = false
-                        showThermalOptions = false
-                        showColorCombo = false
                     }
                 }
             }
@@ -290,7 +278,6 @@ Item {
                     text: "Gimbal"
                     font.pointSize: 8
                     onClicked: {
-                        showCameraOptions = false
                         showGimbalControls = !showGimbalControls
                     }
                 }
@@ -359,7 +346,6 @@ Item {
                     text: "Gimbal"
                     font.pointSize: 8
                     onClicked: {
-                        showCameraOptions = false
                         showGimbalControls = !showGimbalControls
                     }
                 }
@@ -462,7 +448,8 @@ Item {
                 }
             }
 
-            // WADZO toolbar
+            // WADZO toolbar (disabled)
+            /*
             ColumnLayout {
                 visible: selectedCamera === "WADZO"
                 spacing: ScreenTools.defaultFontPixelHeight / 4
@@ -515,7 +502,6 @@ Item {
                     text: "Gimbal"
                     font.pointSize: 8
                     onClicked: {
-                        showCameraOptions = false
                         showGimbalControls = !showGimbalControls
                     }
                 }
@@ -530,8 +516,10 @@ Item {
                     onClicked: sendSetCenter()
                 }
             }
+            */
 
-            // ECON toolbar
+            // ECON toolbar (disabled)
+            /*
             ColumnLayout {
                 visible: selectedCamera === "ECON"
                 spacing: ScreenTools.defaultFontPixelHeight / 4
@@ -584,7 +572,6 @@ Item {
                     text: "Gimbal"
                     font.pointSize: 8
                     onClicked: {
-                        showCameraOptions = false
                         showGimbalControls = !showGimbalControls
                     }
                 }
@@ -599,6 +586,7 @@ Item {
                     onClicked: sendSetCenter()
                 }
             }
+            */
         }
     }
 
@@ -651,104 +639,6 @@ Item {
                 onPressed: sendGimbalRight()
                 onReleased: sendStopGimbal()
             }
-        }
-    }
-
-    Rectangle {
-        id: cameraPopup
-        visible: showCameraOptions && _root.isTheVideoFull && QGroundControl.videoManager.decoding
-        z: 1000
-        radius: 10
-        color: "#1a1a2e"
-        width: ScreenTools.defaultFontPixelWidth * 18
-        implicitHeight: cameraLayout.height + ScreenTools.defaultFontPixelHeight * 2
-        anchors.left: rect1.right
-        anchors.top: rect1.top
-        anchors.leftMargin: 6
-
-        ColumnLayout {
-            id: cameraLayout
-            anchors.centerIn: parent
-            anchors.margins: ScreenTools.defaultFontPixelWidth * 1.5
-            spacing: ScreenTools.defaultFontPixelHeight / 3
-
-            QGCLabel {
-                text: "Cameras"
-                font.pointSize: ScreenTools.defaultFontPointSize
-                font.bold: true
-                color: "#cfcfe0"
-                Layout.alignment: Qt.AlignHCenter
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                height: 1
-                color: "#23233d"
-                opacity: 0.8
-            }
-
-            QGCToolBarButton {
-                text: "A8 Mini"
-                font.pointSize: 8
-                logo: true
-                //iconSize: ScreenTools.defaultFontPixelHeight * 3
-                icon.source: "/res/a8mini_icon"
-                normalIconColor: "#8a8aa3"
-                normalColor: selectedCamera === "A8 Mini" ? "#23233d" : "transparent"
-                Layout.fillWidth: true
-                onClicked: {
-                    selectedCamera = "A8 Mini"
-                    showCameraOptions = false
-                   // console.log("Selected camera: A8 Mini")
-                }
-            }
-
-            QGCToolBarButton {
-                text: "ZT 30"
-                font.pointSize: 8
-                //iconSize: ScreenTools.defaultFontPixelHeight * 3
-                icon.source: "/res/zt30_icon"
-                normalIconColor: "#ffffff"
-                normalColor: selectedCamera === "ZT 30" ? "#23233d" : "transparent"
-                Layout.fillWidth: true
-                onClicked: {
-                    selectedCamera = "ZT 30"
-                    showCameraOptions = false
-                    //console.log("Selected camera: ZT 30")
-                }
-            }
-
-            // QGCToolBarButton {
-            //     text: "WADZO"
-            //     font.pointSize: 8
-            //     logo: true
-            //     //iconSize: ScreenTools.defaultFontPixelHeight * 3
-            //     icon.source: "/res/vadzo_icon"
-            //     normalIconColor: "#8a8aa3"
-            //     normalColor: selectedCamera === "WADZO" ? "#23233d" : "transparent"
-            //     Layout.fillWidth: true
-            //     onClicked: {
-            //         selectedCamera = "WADZO"
-            //         showCameraOptions = false
-            //         //console.log("Selected camera: WADZO")
-            //     }
-            // }
-
-            // QGCToolBarButton {
-            //     text: "ECON"
-            //     font.pointSize: 8
-            //     logo: true
-            //     //iconSize: ScreenTools.defaultFontPixelHeight * 3
-            //     icon.source: "/res/econ_icon"
-            //     normalIconColor: "#8a8aa3"
-            //     normalColor: selectedCamera === "ECON" ? "#23233d" : "transparent"
-            //     Layout.fillWidth: true
-            //     onClicked: {
-            //         selectedCamera = "ECON"
-            //         showCameraOptions = false
-            //         //console.log("Selected camera: ECON")
-            //     }
-            // }
         }
     }
 

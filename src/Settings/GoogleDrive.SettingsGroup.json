@@ -1,0 +1,42 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "enabled",
+    "shortDesc": "Enable Google Drive log upload",
+    "longDesc":  "When enabled, downloaded vehicle logs can be uploaded to Google Drive.",
+    "type":             "bool",
+    "default":     false
+},
+{
+    "name":             "autoLogUpload",
+    "shortDesc": "Automatically upload downloaded logs",
+    "longDesc":  "When enabled, every onboard log downloaded from the vehicle is automatically uploaded to Google Drive.",
+    "type":             "bool",
+    "default":     true
+},
+{
+    "name":             "folderName",
+    "shortDesc": "Google Drive folder name",
+    "longDesc":  "Name of the Google Drive folder where logs are uploaded. The folder is created if it does not exist.",
+    "type":             "string",
+    "default":     "FWD LM GCS Logs"
+},
+{
+    "name":             "clientId",
+    "shortDesc": "Google OAuth 2.0 client ID",
+    "longDesc":  "OAuth 2.0 client ID of a Google Cloud 'Desktop app' OAuth client. Leave empty until credentials are provisioned.",
+    "type":             "string",
+    "default":     ""
+},
+{
+    "name":             "clientSecret",
+    "shortDesc": "Google OAuth 2.0 client secret",
+    "longDesc":  "OAuth 2.0 client secret of a Google Cloud 'Desktop app' OAuth client. Leave empty until credentials are provisioned.",
+    "type":             "string",
+    "default":     ""
+}
+]
+}

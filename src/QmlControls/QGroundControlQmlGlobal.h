@@ -65,6 +65,8 @@ public:
     Q_PROPERTY(QGCPositionManager*  qgcPositionManger       READ    qgcPositionManger       CONSTANT)
     Q_PROPERTY(VideoManager*        videoManager            READ    videoManager            CONSTANT)
     Q_PROPERTY(MAVLinkLogManager*   mavlinkLogManager       READ    mavlinkLogManager       CONSTANT)
+    Q_PROPERTY(LogDownloadController* logDownloadController READ    logDownloadController   CONSTANT)
+    Q_PROPERTY(GoogleDriveManager*  googleDriveManager  READ    googleDriveManager      CONSTANT)
     Q_PROPERTY(SettingsManager*     settingsManager         READ    settingsManager         CONSTANT)
     Q_PROPERTY(ADSBVehicleManager*  adsbVehicleManager      READ    adsbVehicleManager      CONSTANT)
     Q_PROPERTY(AirspaceManager*     airspaceManager         READ    airspaceManager         CONSTANT)
@@ -163,6 +165,8 @@ public:
     MissionCommandTree*     missionCommandTree  ()  { return _missionCommandTree; }
     VideoManager*           videoManager        ()  { return _videoManager; }
     MAVLinkLogManager*      mavlinkLogManager   ()  { return _mavlinkLogManager; }
+    LogDownloadController*  logDownloadController ()  { return _logDownloadController; }
+    GoogleDriveManager*     googleDriveManager  ()  { return _googleDriveManager; }
     QGCCorePlugin*          corePlugin          ()  { return _corePlugin; }
     SettingsManager*        settingsManager     ()  { return _settingsManager; }
     FactGroup*              gpsRtkFactGroup     ()  { return _gpsRtkFactGroup; }
@@ -255,6 +259,8 @@ private:
     MissionCommandTree*     _missionCommandTree     = nullptr;
     VideoManager*           _videoManager           = nullptr;
     MAVLinkLogManager*      _mavlinkLogManager      = nullptr;
+    LogDownloadController*  _logDownloadController  = nullptr;
+    GoogleDriveManager*     _googleDriveManager     = nullptr;
     QGCCorePlugin*          _corePlugin             = nullptr;
     FirmwarePluginManager*  _firmwarePluginManager  = nullptr;
     SettingsManager*        _settingsManager        = nullptr;

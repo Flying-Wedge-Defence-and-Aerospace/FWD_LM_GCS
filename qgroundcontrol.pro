@@ -245,6 +245,7 @@ QT += \
     gui \
     location \
     network \
+    networkauth \
     opengl \
     positioning \
     qml \
@@ -692,6 +693,7 @@ HEADERS += \
     src/Settings/AutoConnectSettings.h \
     src/Settings/BrandImageSettings.h \
     src/Settings/RemoteIDSettings.h \
+    src/Settings/GoogleDriveSettings.h \
     src/Settings/FirmwareUpgradeSettings.h \
     src/Settings/FlightMapSettings.h \
     src/Settings/FlyViewSettings.h \
@@ -725,6 +727,7 @@ HEADERS += \
     src/Vehicle/ComponentInformationTranslation.h \
     src/Vehicle/EventHandler.h \
     src/Vehicle/FTPManager.h \
+    src/Vehicle/GoogleDriveManager.h \
     src/Vehicle/GPSRTKFactGroup.h \
     src/Vehicle/HealthAndArmingCheckReport.h \
     src/Vehicle/ImageProtocolManager.h \
@@ -957,6 +960,7 @@ SOURCES += \
     src/Settings/AutoConnectSettings.cc \
     src/Settings/BrandImageSettings.cc \
     src/Settings/RemoteIDSettings.cc \
+    src/Settings/GoogleDriveSettings.cc \
     src/Settings/FirmwareUpgradeSettings.cc \
     src/Settings/FlightMapSettings.cc \
     src/Settings/FlyViewSettings.cc \
@@ -990,6 +994,7 @@ SOURCES += \
     src/Vehicle/ComponentInformationTranslation.cc \
     src/Vehicle/EventHandler.cc \
     src/Vehicle/FTPManager.cc \
+    src/Vehicle/GoogleDriveManager.cc \
     src/Vehicle/GPSRTKFactGroup.cc \
     src/Vehicle/HealthAndArmingCheckReport.cc \
     src/Vehicle/ImageProtocolManager.cc \

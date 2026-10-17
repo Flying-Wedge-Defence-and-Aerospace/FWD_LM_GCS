@@ -26,6 +26,8 @@
 #include "PositionManager.h"
 #include "VideoManager.h"
 #include "MAVLinkLogManager.h"
+#include "LogDownloadController.h"
+#include "GoogleDriveManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 #include "SettingsManager.h"
@@ -70,6 +72,8 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _followMe               = new FollowMe                  (app, this);
     _videoManager           = new VideoManager              (app, this);
     _mavlinkLogManager      = new MAVLinkLogManager         (app, this);
+    _logDownloadController  = new LogDownloadController     (app, this);
+    _googleDriveManager     = new GoogleDriveManager        (app, this);
     _adsbVehicleManager     = new ADSBVehicleManager        (app, this);
     _airspaceManager        = new AirspaceManager           (app, this);
 #if defined(QGC_ENABLE_PAIRING)
@@ -107,6 +111,10 @@ void QGCToolbox::setChildToolboxes(void)
     _qgcPositionManager->setToolbox(this);
     _videoManager->setToolbox(this);
     _mavlinkLogManager->setToolbox(this);
+    _logDownloadController->setToolbox(this);
+    _googleDriveManager->setToolbox(this);
+    connect(_logDownloadController, &LogDownloadController::logDownloadCompleted,
+            _googleDriveManager,    &GoogleDriveManager::onLogDownloadCompleted);
     _adsbVehicleManager->setToolbox(this);
     _airspaceManager->setToolbox(this);
 #if defined(QGC_GST_TAISYNC_ENABLED)

@@ -21,6 +21,7 @@
 
 #include "UASInterface.h"
 #include "AutoPilotPlugin.h"
+#include "QGCToolbox.h"
 
 class  MultiVehicleManager;
 class  UASInterface;
@@ -109,25 +110,31 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-class LogDownloadController : public QObject
+class LogDownloadController : public QGCTool
 {
     Q_OBJECT
 
 public:
-    LogDownloadController(void);
+    LogDownloadController(QGCApplication* app, QGCToolbox* toolbox);
+
+    // Overrides from QGCTool
+    void setToolbox(QGCToolbox* toolbox) override;
 
     Q_PROPERTY(QGCLogModel* model           READ model              NOTIFY modelChanged)
     Q_PROPERTY(bool         requestingList  READ requestingList     NOTIFY requestingListChanged)
     Q_PROPERTY(bool         downloadingLogs READ downloadingLogs    NOTIFY downloadingLogsChanged)
+    Q_PROPERTY(bool         autoDownloadActive READ autoDownloadActive NOTIFY autoDownloadActiveChanged)
 
     QGCLogModel*    model                   () { return &_logEntriesModel; }
     bool            requestingList          () const{ return _requestingLogEntries; }
     bool            downloadingLogs         () const{ return _downloadingLogs; }
+    bool            autoDownloadActive      () const{ return _autoMode; }
 
     Q_INVOKABLE void refresh                ();
     Q_INVOKABLE void download               (QString path = QString());
     Q_INVOKABLE void eraseAll               ();
     Q_INVOKABLE void cancel                 ();
+    Q_INVOKABLE QVariantList telemetryLogFiles();
 
     void downloadToDirectory(const QString& dir);
 
@@ -136,12 +143,23 @@ signals:
     void downloadingLogsChanged ();
     void modelChanged           ();
     void selectionChanged       ();
+    void autoDownloadActiveChanged ();
+    void autoDownloadFinished   (int downloaded, int failed, int skipped);
+
+    /// Emitted when an onboard log file has been fully downloaded to disk.
+    /// @param filePath Absolute path of the downloaded log file.
+    void logDownloadCompleted   (const QString& filePath);
 
 private slots:
     void _setActiveVehicle  (Vehicle* vehicle);
     void _logEntry          (UASInterface *uas, uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num);
     void _logData           (UASInterface *uas, uint32_t ofs, uint16_t id, uint8_t count, const uint8_t *data);
     void _processDownload   ();
+    void _vehicleInitialConnectComplete ();
+    void _vehicleArmedChanged           (bool armed);
+    void _autoActiveCheckTimeout        ();
+    void _ftpDownloadComplete           (const QString& file, const QString& errorMsg);
+    void _ftpDownloadProgress           (float value);
 
 private:
     bool _entriesComplete   ();
@@ -149,15 +167,38 @@ private:
     bool _logComplete       () const;
     void _findMissingEntries();
     void _receivedAllEntries();
+    void _listingComplete   ();
     void _receivedAllData   ();
     void _resetSelection    (bool canceled = false);
     void _findMissingData   ();
+    void _requestNextDataSpan();
     void _requestLogList    (uint32_t start, uint32_t end);
     void _requestLogData    (uint16_t id, uint32_t offset, uint32_t count, int retryCount = 0);
     bool _prepareLogDownload();
     void _setDownloading    (bool active);
     void _setListing        (bool active);
     void _updateDataRate    ();
+    void _updateCommunicationLostEnabled ();
+    uint32_t _currentRequestSize() const;
+    void _abortCurrentLogDownload();
+
+    // FTP based fast download support
+    bool _ftpLogDownloadSupported () const;
+    bool _startFtpDownload        ();
+    bool _startFtpCandidate       ();
+    void _ftpDownloadFailed       ();
+    void _startLegacyDownload     ();
+    void _cancelFtpDownload       ();
+
+    // Auto download support
+    bool    _autoDownloadEnabled     () const;
+    void    _maybeStartAutoDownload  ();
+    void    _autoSelectAndDownload   ();
+    void    _cancelAutoDownload      ();
+    QString _dedupeGroup             () const;
+    QString _logFingerprint          (const QGCLogEntry* entry) const;
+    bool    _isLogAlreadyDownloaded  (const QGCLogEntry* entry) const;
+    void    _markLogDownloaded       (const QGCLogEntry* entry, const QString& filePath);
 
     QGCLogEntry* _getNextSelected();
 
@@ -171,6 +212,28 @@ private:
     int                 _retries;
     int                 _apmOneBased;
     QString             _downloadPath;
+
+    // Auto download / robustness
+    bool                _autoMode;
+    int                 _autoDownloadedCount;
+    int                 _autoFailedCount;
+    int                 _autoSkippedCount;
+    bool                _autoStabilityCheck;
+    uint16_t            _autoNewestId;
+    uint32_t            _autoNewestSize;
+    QTimer              _autoStabilityTimer;
+    QElapsedTimer       _progressTimer;
+    uint32_t            _requestSize;
+    uint32_t            _lastReqOffset;             ///< Offset of the last legacy LOG_REQUEST_DATA burst
+    uint32_t            _lastReqCount;              ///< Size of the last legacy LOG_REQUEST_DATA burst
+    QElapsedTimer       _lastReqTimer;              ///< Time of the last legacy LOG_REQUEST_DATA burst
+
+    // FTP based fast download state
+    bool                _ftpActive;
+    QStringList         _ftpCandidateUris;      ///< Candidate FTP URIs for the current entry (tried in order)
+    int                 _ftpCandidateIndex;     ///< Index into _ftpCandidateUris currently in flight
+    qreal               _ftpMaxProgress;        ///< Highest progress fraction seen for the in-flight FTP transfer
+    QElapsedTimer       _ftpProgressTimer;      ///< Time since the FTP progress fraction last increased
 };
 
 #endif

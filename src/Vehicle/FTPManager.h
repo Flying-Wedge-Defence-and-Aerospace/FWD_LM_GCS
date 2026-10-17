@@ -154,5 +154,11 @@ private:
     
     static const int _ackOrNakTimeoutMsecs  = 1000;
     static const int _maxRetry              = 3;
+
+    /// If an FTP burst read of a file larger than kFtpBurstLossFloorBytes drops more than
+    /// kFtpBurstLossAbortBytes of data, the transfer aborts so the caller can fall back to the
+    /// legacy chunked download instead of slowly refilling holes one 239-byte block at a time.
+    static constexpr uint64_t kFtpBurstLossFloorBytes = 256 * 1024;
+    static constexpr uint64_t kFtpBurstLossAbortBytes = 128 * 1024;
 };
 

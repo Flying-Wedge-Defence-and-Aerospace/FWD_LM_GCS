@@ -405,7 +405,23 @@ void FTPManager::_burstReadFileAckOrNak(const MavlinkFTP::Request* ackOrNak)
                 _burstReadFileWorker(true); /* Retry from last expected offset */
             } else {
                 qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak EOF";
-                _advanceStateMachine();
+                // The burst read has finished walking the file. If it lost a large amount of
+                // data, the link is flooding and refilling the holes one 239-byte block per
+                // round-trip (_fillMissingBlocks) would be far slower than re-requesting the
+                // whole file over a request/response protocol. Fail here so the caller can fall
+                // back to the legacy chunked download. Only applies to large files so that a
+                // brief burst on a clean link (or a small file) is never abandoned.
+                uint64_t missingBytes = 0;
+                for (const MissingData_t& missing : _downloadState.rgMissingData) {
+                    missingBytes += missing.cBytesMissing;
+                }
+                if (_downloadState.fileSize > kFtpBurstLossFloorBytes && missingBytes > kFtpBurstLossAbortBytes) {
+                    qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak: burst lost too much data"
+                                           << "missing:" << missingBytes << "fileSize:" << _downloadState.fileSize;
+                    _downloadComplete(tr("Download failed: too much data lost to link"));
+                } else {
+                    _advanceStateMachine();
+                }
             }
         } else { /* Don't care is this is out of sequence */
             qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak: Nak -" << _errorMsgFromNak(ackOrNak);

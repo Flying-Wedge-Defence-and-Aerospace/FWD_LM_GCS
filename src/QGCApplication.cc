@@ -522,7 +522,9 @@ void QGCApplication::_initCommon()
     qmlRegisterType<QGCFileDialogController>        (kQGCControllers,                       1, 0, "QGCFileDialogController");
     qmlRegisterType<RCChannelMonitorController>     (kQGCControllers,                       1, 0, "RCChannelMonitorController");
     qmlRegisterType<JoystickConfigController>       (kQGCControllers,                       1, 0, "JoystickConfigController");
-    qmlRegisterType<LogDownloadController>          (kQGCControllers,                       1, 0, "LogDownloadController");
+    qmlRegisterUncreatableType<LogDownloadController>(kQGCControllers,                       1, 0, "LogDownloadController", kRefOnly);
+    qmlRegisterUncreatableType<QGCLogModel>         (kQGCControllers,                       1, 0, "QGCLogModel",                kRefOnly);
+    qmlRegisterUncreatableType<QGCLogEntry>         (kQGCControllers,                       1, 0, "QGCLogEntry",                kRefOnly);
     qmlRegisterType<SyslinkComponentController>     (kQGCControllers,                       1, 0, "SyslinkComponentController");
     qmlRegisterType<EditPositionDialogController>   (kQGCControllers,                       1, 0, "EditPositionDialogController");
     qmlRegisterType<RCToParamDialogController>      (kQGCControllers,                       1, 0, "RCToParamDialogController");

@@ -31,15 +31,15 @@ Item {
 
     property bool   _currentMissionItemValid:   _currentMissionItem && _currentMissionItem !== undefined && _currentMissionItem !== null
     property bool   _curreItemIsFlyThrough:     _currentMissionItemValid && _currentMissionItem.specifiesCoordinate && !_currentMissionItem.isStandaloneCoordinate
-    property bool   _currentItemIsVTOLTakeoff:  _currentMissionItemValid && _currentMissionItem.command == 84
+    property bool   _currentItemIsVTOLTakeoff:  _currentMissionItemValid && _currentMissionItem.command === 84
     property bool   _missionValid:              missionItems !== undefined
 
     property real   _dataFontSize:              ScreenTools.defaultFontPointSize
     property real   _largeValueWidth:           ScreenTools.defaultFontPixelWidth * 8
     property real   _mediumValueWidth:          ScreenTools.defaultFontPixelWidth * 4
     property real   _smallValueWidth:           ScreenTools.defaultFontPixelWidth * 3
-    property real   _labelToValueSpacing:       ScreenTools.defaultFontPixelWidth
-    property real   _rowSpacing:                ScreenTools.isMobile ? 1 : 0
+    property real   _labelToValueSpacing:       ScreenTools.defaultFontPixelWidth / 2
+    property real   _rowSpacing:                ScreenTools.isMobile ? 0 : 0
     property real   _distance:                  _currentMissionItemValid ? _currentMissionItem.distance : NaN
     property real   _altDifference:             _currentMissionItemValid ? _currentMissionItem.altDifference : NaN
     property real   _azimuth:                   _currentMissionItemValid ? _currentMissionItem.azimuth : NaN
@@ -78,7 +78,7 @@ Item {
         var days = Qt.formatDateTime(t, 'dd')
         var complete
 
-        if (days == 31) {
+        if (days === 31) {
             days = '0'
             complete = Qt.formatTime(t, 'hh:mm:ss')
         } else {

@@ -58,6 +58,7 @@
 		<file alias="JoystickConfigGeneral.qml">../src/VehicleSetup/JoystickConfigGeneral.qml</file>
 		<file alias="LinkSettings.qml">../src/ui/preferences/LinkSettings.qml</file>
 		<file alias="LogDownloadPage.qml">../src/AnalyzeView/LogDownloadPage.qml</file>
+		<file alias="OnboardLogsPage.qml">../src/AnalyzeView/OnboardLogsPage.qml</file>
 		<file alias="LogReplaySettings.qml">../src/ui/preferences/LogReplaySettings.qml</file>
 		<file alias="MainRootWindow.qml">../src/ui/MainRootWindow.qml</file>
 		<file alias="MavlinkConsolePage.qml">../src/AnalyzeView/MavlinkConsolePage.qml</file>
@@ -305,6 +306,7 @@
 		<file alias="CameraSpec.FactMetaData.json">../src/MissionManager/CameraSpec.FactMetaData.json</file>
 		<file alias="CorridorScan.SettingsGroup.json">../src/MissionManager/CorridorScan.SettingsGroup.json</file>
 		<file alias="RemoteID.SettingsGroup.json">../src/Settings/RemoteID.SettingsGroup.json</file>
+		<file alias="GoogleDrive.SettingsGroup.json">../src/Settings/GoogleDrive.SettingsGroup.json</file>
 		<file alias="EditPositionDialog.FactMetaData.json">../src/QmlControls/EditPositionDialog.FactMetaData.json</file>
 		<file alias="FirmwareUpgrade.SettingsGroup.json">../src/Settings/FirmwareUpgrade.SettingsGroup.json</file>
 		<file alias="FlightMap.SettingsGroup.json">../src/Settings/FlightMap.SettingsGroup.json</file>

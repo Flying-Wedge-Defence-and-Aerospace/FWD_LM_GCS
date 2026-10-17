@@ -37,14 +37,51 @@ Rectangle {
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool openProfile: false
 
-    // Only show specific flight modes (case-insensitive matching)
+    // Only show these flight modes. Matching ignores case, spaces and
+    // punctuation so ArduPilot's own names match, e.g. "QHover" -> "qhover"
+    // matches "q-hover", and "FBWA" matches "fbw a".
     property var _filteredFlightModes: _calcFilteredModes()
-    property var _allowedModes: ["stabilize","stabilized","loiter","hold","guided","auto","mission","altitude hold","altitude","depth hold","rtl","return","land","surface","circle"]
+    property var _allowedModes: ["fbw a","stabilize","rtl","auto","guided","q-stabilize","q-hover","q-loiter","q-land","q-rtl"]
+
+    // QGC's own fallback list (used only if the vehicle does not answer
+    // AVAILABLE_MODES) spells the Q modes out in full. This maps those to
+    // the canonical names above. It only affects matching - the label shown
+    // is always whatever the vehicle/plugin reported.
+    property var _modeAliases: {
+        "quadplanestabilize": "q-stabilize",
+        "quadplanehover":     "q-hover",
+        "quadplaneloiter":    "q-loiter",
+        "quadplaneland":      "q-land",
+        "quadplanertl":       "q-rtl"
+    }
+
+    function _normalizeModeName(mode) {
+        return mode.toLowerCase().replace(/[^a-z0-9]/g, "")
+    }
+
+    function _canonicalModeName(mode) {
+        var normalized = _normalizeModeName(mode)
+        if (_modeAliases[normalized] !== undefined) {
+            return _normalizeModeName(_modeAliases[normalized])
+        }
+        return normalized
+    }
+
+    function _isModeAllowed(mode) {
+        var canonical = _canonicalModeName(mode)
+        for (var i = 0; i < _allowedModes.length; i++) {
+            if (_normalizeModeName(_allowedModes[i]) === canonical) {
+                return true
+            }
+        }
+        return false
+    }
+
     function _calcFilteredModes() {
         if (!_activeVehicle) return []
         var modes = _activeVehicle.flightModes
         //console.log("FWDGCS flightModes from vehicle:", JSON.stringify(modes))
-        return modes.filter(function(m) { return _allowedModes.indexOf(m.toLowerCase()) !== -1 })
+        return modes.filter(function(m) { return _isModeAllowed(m) })
     }
     on_ActiveVehicleChanged: _filteredFlightModes = _calcFilteredModes()
     Connections {
@@ -100,6 +137,7 @@ Rectangle {
     }
 
     QGCColoredImage {
+        id: logo
         height:     ScreenTools.defaultFontPixelHeight * 2.5
         width:      height + 8
         source: "/res/FWD_only_logo"
@@ -108,6 +146,26 @@ Rectangle {
         anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
         //anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
+    }
+
+    QGCFlickable {
+        id: toolsFlickable
+        visible: planView.visible
+        anchors.left: logo.right
+        anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 3
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.right: toolsRightLayout.left
+        contentWidth: indicatorLoader.x + indicatorLoader.width
+        flickableDirection: Flickable.HorizontalFlick
+        clip: true
+
+        Loader {
+            id: indicatorLoader
+            x: ScreenTools.defaultFontPixelWidth / 2
+            y: ScreenTools.defaultFontPixelWidth / 2
+            source: planView.visible ? "qrc:/qml/PlanToolBarIndicators.qml" : ""
+        }
     }
 
     // RowLayout {
@@ -250,7 +308,7 @@ Rectangle {
             Layout.preferredWidth: item ? item.implicitWidth : 0
             Layout.preferredHeight: item ? item.implicitHeight : 0
             source: "qrc:/toolbar/MultiVehicleSelector.qml"
-            visible:                QGroundControl.multiVehicleManager.vehicles.count >= 2
+            visible:                QGroundControl.multiVehicleManager.vehicles.count >= 2 && !planView.visible
         }
 
         Rectangle {
@@ -286,6 +344,7 @@ Rectangle {
                     MainStatusIndicator {
                         Layout.fillHeight: true
                         Layout.alignment: Qt.AlignHCenter
+                        visible: !planView.visible
                     }
 
                     Rectangle {
@@ -293,12 +352,14 @@ Rectangle {
                         width: 1
                         opacity: 0.5
                         color: "white"
+                        visible: !planView.visible
                     }
 
                     Item {
                         id: centerContainer
                         implicitWidth: ScreenTools.isMobile ? 200 : mainStatusRect.width + (ScreenTools.defaultFontPixelWidth)
                         height: parent.height
+                        visible: !planView.visible
 
                         Rectangle {
                             id: mainStatusRect
@@ -357,6 +418,7 @@ Rectangle {
                         width: 1
                         opacity: 0.5
                         color: "white"
+                        visible: !planView.visible
                     }
 
                     Loader {
@@ -367,6 +429,7 @@ Rectangle {
                         Layout.preferredWidth: item ? item.implicitWidth : 0
                         Layout.preferredHeight: item ? item.implicitHeight : 0
                         source: "qrc:/toolbar/GPSIndicator.qml"
+                        visible: !planView.visible
                     }
 
                     Rectangle {
@@ -374,6 +437,7 @@ Rectangle {
                         width: 1
                         opacity: 0.5
                         color: "white"
+                        visible: !planView.visible
                     }
 
                     Loader {
@@ -383,6 +447,7 @@ Rectangle {
                         Layout.preferredWidth: item ? item.implicitWidth : 0
                         Layout.preferredHeight: item ? item.implicitHeight : 0
                         source: "qrc:/toolbar/BatteryIndicator.qml"
+                        visible: !planView.visible
                     }
 
                     Rectangle {
@@ -390,6 +455,7 @@ Rectangle {
                         width: 1
                         opacity: 0.5
                         color: "white"
+                        visible: !planView.visible
                     }
 
                     Loader {
@@ -399,6 +465,7 @@ Rectangle {
                         Layout.preferredWidth: item ? item.implicitWidth : 0
                         Layout.preferredHeight: item ? item.implicitHeight : 0
                         source: "qrc:/toolbar/RCRSSIIndicator.qml"
+                        visible: !planView.visible
                     }
 
                     Rectangle {

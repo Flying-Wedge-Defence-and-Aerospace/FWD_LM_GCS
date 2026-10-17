@@ -29,6 +29,9 @@ import QGroundControl.SettingsManager       1.0
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import Qt.labs.settings 1.0
+
+//import "QGroundControl/FlightDisplay/CameraState.js" as CameraState
 
 Rectangle {
     id: root
@@ -49,6 +52,12 @@ Rectangle {
     property bool   _isRTSP:                    _isGst && _videoSource === _videoSettings.rtspVideoSource
     property bool   _isTCP:                     _isGst && _videoSource === _videoSettings.tcpVideoSource
     property bool   _isMPEGTS:                  _isGst && _videoSource === _videoSettings.mpegtsVideoSource
+
+    Settings {
+        id: appCameraSettings
+        category: "camera"
+        property string selectedCamera: "A8 Mini"
+    }
 
     Flickable {
         id: flick
@@ -269,6 +278,94 @@ Rectangle {
                             Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                             //indexModel:             false
                             fact:                   _videoSettings.aspectRatio
+                        }
+                    }
+                }
+            }
+
+            QGCLabel {
+                text: "Camera Selection"
+                font.bold: true
+                font.pointSize: 11
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+
+            Rectangle {
+                width: ScreenTools.defaultFontPixelWidth * 75
+                implicitHeight: cameraLayout.implicitHeight + 30
+                radius: 6
+                color: "transparent"
+                border.color: "#888"
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+
+                ColumnLayout {
+                    id: cameraLayout
+                    anchors.centerIn: parent
+                    spacing: ScreenTools.defaultFontPixelWidth * 2
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: 20
+
+                        QGCLabel {
+                            text: "Selected Camera"
+                            font.pointSize: 10
+                            Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                            horizontalAlignment: Text.AlignLeft
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        QGCLabel {
+                            text: appCameraSettings.selectedCamera
+                            font.pointSize: 10
+                            font.bold: true
+                            color: "#00d4aa"
+                            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                        }
+                    }
+
+                    Rectangle {
+                        height: 1
+                        Layout.fillWidth: true
+                        color: "gray"
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: 10
+
+                        Repeater {
+                            model: ["A8 Mini", "ZT 30"]
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: cameraBtnLabel.implicitHeight + 20
+                                radius: 6
+                                color: appCameraSettings.selectedCamera === modelData ? "#23233d" : "transparent"
+                                border.color: appCameraSettings.selectedCamera === modelData ? "#00d4aa" : "#888"
+                                border.width: 1
+
+                                QGCLabel {
+                                    id: cameraBtnLabel
+                                    anchors.centerIn: parent
+                                    text: modelData
+                                    font.pointSize: 10
+                                    color: appCameraSettings.selectedCamera === modelData ? "#00d4aa" : "#8a8aa3"
+                                }
+
+                                // MouseArea {
+                                //     anchors.fill: parent
+                                //     cursorShape: Qt.PointingHandCursor
+                                //     onClicked: {
+                                //         appCameraSettings.selectedCamera = modelData
+                                //         CameraState.selectedCamera = modelData
+                                //         console.log("Camera selected:", modelData)
+                                //     }
+                                // }
+                            }
                         }
                     }
                 }

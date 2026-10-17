@@ -79,6 +79,8 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _missionCommandTree     = toolbox->missionCommandTree();
     _videoManager           = toolbox->videoManager();
     _mavlinkLogManager      = toolbox->mavlinkLogManager();
+    _logDownloadController  = toolbox->logDownloadController();
+    _googleDriveManager     = toolbox->googleDriveManager();
     _corePlugin             = toolbox->corePlugin();
     _firmwarePluginManager  = toolbox->firmwarePluginManager();
     _settingsManager        = toolbox->settingsManager();

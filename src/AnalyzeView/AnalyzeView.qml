@@ -36,10 +36,6 @@ Rectangle {
         id: geoController
     }
 
-    LogDownloadController {
-        id: logController
-    }
-
     QGCFlickable {
         id:                 buttonScroll
         width:              buttonColumn.width
@@ -122,7 +118,7 @@ Rectangle {
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-        source:                 "LogDownloadPage.qml"
+        source:                 "OnboardLogsPage.qml"
 
         property string title
 
