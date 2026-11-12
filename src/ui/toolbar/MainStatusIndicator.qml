@@ -32,27 +32,44 @@ RowLayout {
 
     Rectangle {
         id: mainStatusRect
-        color:  "gray"/*mainStatusLabel._mainStatusBGColor */   // use your dynamic background color
+        color:  "#0D0D0D"
         radius: 15
-        Layout.alignment: Qt.AlignHCenter || Qt.AlignVCenter
-        //anchors.centerIn: parent
-        implicitWidth: mainStatusLabel.contentWidth + 10
+        border.width: 1
+        border.color: Qt.rgba(1, 1, 1, 0.18)
+        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+        implicitWidth: statusDot.width + 6 + mainStatusLabel.contentWidth + 20
         height: mainStatusLabel.contentHeight + 15
+
+        Rectangle {
+            id: statusDot
+            width: 8
+            height: 8
+            radius: 4
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            anchors.verticalCenter: parent.verticalCenter
+            color: mainStatusLabel._mainStatusBGColor === "green" ? "#800000"
+                   : mainStatusLabel._mainStatusBGColor === "yellow" ? "#C58B1A"
+                   : mainStatusLabel._mainStatusBGColor === "red" ? "#B3001B"
+                   : "#7A7A7A"
+        }
 
         QGCLabel {
             id: mainStatusLabel
-            anchors.centerIn: parent
+            anchors.left: statusDot.right
+            anchors.leftMargin: 6
+            anchors.verticalCenter: parent.verticalCenter
             text: mainStatusText()
             color: "white"
             font.pointSize: /*_vehicleInAir ? ScreenTools.defaultFontPointSize : ScreenTools.largeFontPointSize*/ ScreenTools.isMobile ? 8 : 12
 
-            property color _mainStatusBGColor: "#696969"
-            property string _commLostText:      qsTr("Communication Lost")
-            property string _readyToFlyText:    qsTr("Ready To Fly")
+            property string _mainStatusBGColor: "#7A7A7A"
+            property string _commLostText:      qsTr("Link Lost")
+            property string _readyToFlyText:    qsTr("Flight Ready")
             property string _notReadyToFlyText: qsTr("Not Ready")
-            property string _disconnectedText:  qsTr("Disconnected")
+            property string _disconnectedText:  qsTr("Offline")
             property string _armedText:         qsTr("Armed")
-            property string _flyingText:        qsTr("Flying")
+            property string _flyingText:        qsTr("Airborne")
             property string _landingText:       qsTr("Landing")
 
             function mainStatusText() {
@@ -107,6 +124,7 @@ RowLayout {
                         }
                     }
                 } else {
+                    _mainStatusBGColor = "#7A7A7A"
                     return _disconnectedText
                 }
             }

@@ -77,6 +77,7 @@ LinuxBuild {
         libQt5Multimedia.so.5 \
         libQt5MultimediaQuick.so.5 \
         libQt5Network.so.5 \
+        libQt5NetworkAuth.so.5 \
         libQt5OpenGL.so.5 \
         libQt5Positioning.so.5 \
         libQt5PositioningQuick.so.5 \
@@ -103,7 +104,9 @@ LinuxBuild {
     # Not all Qt libs are built in all systems. CI doesn't build Wayland, for example.
     QT_LIB_OPTIONALS = \
         libQt5WaylandClient.so.5 \
-        libQt5WaylandCompositor.so.5
+        libQt5WaylandCompositor.so.5 \
+        libQt5WebSockets.so.5 \
+        libQt5VirtualKeyboard.so.5
     for(QT_LIB, QT_LIB_OPTIONALS) {
         exists("$$[QT_INSTALL_LIBS]/$$QT_LIB") {
             QT_LIB_LIST += $$QT_LIB
@@ -150,11 +153,11 @@ LinuxBuild {
     # QT_INSTALL_QML
     QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference --recursive $$[QT_INSTALL_QML] $$DESTDIR/Qt/
 
-    # QGroundControl start script
+    # FWD_LM_GCS start script
     contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) | !exists($$PWD/custom/custom.pri) {
-        QMAKE_POST_LINK += && $$QMAKE_COPY $$SOURCE_DIR/deploy/qgroundcontrol-start.sh $$DESTDIR
-        QMAKE_POST_LINK += && $$QMAKE_COPY $$SOURCE_DIR/deploy/qgroundcontrol.desktop $$DESTDIR
-        QMAKE_POST_LINK += && $$QMAKE_COPY $$SOURCE_DIR/resources/icons/qgroundcontrol.png $$DESTDIR
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$SOURCE_DIR/deploy/fwd_lm_gcs-start.sh $$DESTDIR
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$SOURCE_DIR/deploy/fwd_lm_gcs.desktop $$DESTDIR
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$SOURCE_DIR/resources/icons/fwd_lm_gcs.png $$DESTDIR
     } else {
         include($$PWD/custom/custom_deploy.pri)
     }

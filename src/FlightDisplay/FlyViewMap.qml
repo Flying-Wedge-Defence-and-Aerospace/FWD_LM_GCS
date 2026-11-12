@@ -13,6 +13,8 @@ import QtLocation                   5.3
 import QtPositioning                5.3
 import QtQuick.Dialogs              1.2
 import QtQuick.Layouts              1.11
+import QtQuick.Shapes               1.0
+import QtGraphicalEffects           1.0
 
 import QGroundControl               1.0
 import QGroundControl.Controllers   1.0
@@ -289,7 +291,7 @@ FlightMap {
         showText: !pipMode
     }
 
-    // Add trajectory lines to the map
+    // Short recent vehicle trail (last 40 seconds)
     MapPolyline {
         id:         trajectoryPolyline
         line.width: 3
@@ -297,18 +299,61 @@ FlightMap {
         z:          QGroundControl.zOrderTrajectoryLines
         visible:    !pipMode
 
-        Connections {
-            target:                 QGroundControl.multiVehicleManager
-            function onActiveVehicleChanged(activeVehicle) {
-                trajectoryPolyline.path = _activeVehicle ? _activeVehicle.trajectoryPoints.list() : []
+        property var    _trailPoints:       []
+        property int    _trailDurationMs:   40000   // 40 seconds
+        property int    _sampleIntervalMs:  500
+
+        Component.onCompleted: _resetTrail()
+
+        function _resetTrail() {
+            _trailPoints = []
+            trajectoryPolyline.path = []
+            if (_activeVehicle && _activeVehicle.coordinate.isValid) {
+                _addPoint(_activeVehicle.coordinate)
             }
         }
 
-        Connections {
-            target:                 _activeVehicle ? _activeVehicle.trajectoryPoints : null
-            onPointAdded:           trajectoryPolyline.addCoordinate(coordinate)
-            onUpdateLastPoint:      trajectoryPolyline.replaceCoordinate(trajectoryPolyline.pathLength() - 1, coordinate)
-            onPointsCleared:        trajectoryPolyline.path = []
+        function _addPoint(coordinate) {
+            if (!coordinate || !coordinate.isValid) {
+                return
+            }
+
+            var now = Date.now()
+            var last = _trailPoints.length > 0 ? _trailPoints[_trailPoints.length - 1] : null
+
+            if (last && (now - last.time) < _sampleIntervalMs) {
+                // Keep the trail end attached to the vehicle between samples.
+                last.coordinate = coordinate
+                trajectoryPolyline.replaceCoordinate(trajectoryPolyline.pathLength() - 1, coordinate)
+            } else {
+                _trailPoints.push({ coordinate: coordinate, time: now })
+                trajectoryPolyline.addCoordinate(coordinate)
+            }
+
+            // Drop points older than the configured trail duration.
+            while (_trailPoints.length > 0 && (now - _trailPoints[0].time) > _trailDurationMs) {
+                _trailPoints.shift()
+                trajectoryPolyline.removeCoordinate(0)
+            }
+        }
+
+        function _clearTrail() {
+            _trailPoints = []
+            trajectoryPolyline.path = []
+        }
+    }
+
+    Connections {
+        target:                 QGroundControl.multiVehicleManager
+        function onActiveVehicleChanged(activeVehicle) {
+            trajectoryPolyline._resetTrail()
+        }
+    }
+
+    Connections {
+        target:                 _activeVehicle
+        function onCoordinateChanged(coordinate) {
+            trajectoryPolyline._addPoint(coordinate)
         }
     }
 
@@ -319,7 +364,8 @@ FlightMap {
             vehicle:        object
             coordinate:     object.coordinate
             map:            _root
-            size:           pipMode ? ScreenTools.defaultFontPixelHeight : ScreenTools.defaultFontPixelHeight * 3
+            size:           pipMode ? ScreenTools.defaultFontPixelHeight : ScreenTools.defaultFontPixelHeight * 4
+            iconSource:     "/qmlimages/vehicleFixedWing.svg"
             z:              QGroundControl.zOrderVehicles
         }
     }
@@ -442,7 +488,7 @@ FlightMap {
         sourceItem: MissionItemIndexLabel {
             checked:    true
             index:      -1
-            label:      qsTr("Go here", "Go to location waypoint")
+            label:      qsTr("Fly here", "Fly to location waypoint")
         }
 
         property bool inGotoFlightMode: _activeVehicle ? _activeVehicle.flightMode === _activeVehicle.gotoFlightMode : false
@@ -678,6 +724,8 @@ FlightMap {
             id: mapClickMenu
             modal: true
 
+            QGCPalette { id: popupPal; colorGroupEnabled: true }
+
             property var coord
             property var contentItemComponent
 
@@ -699,9 +747,19 @@ FlightMap {
             }
 
             background: Rectangle {
-                radius: ScreenTools.defaultFontPixelHeight / 2
-                color: /*qgcPal.window*/ "#33000000"
-                // border.color: qgcPal.text
+                radius: ScreenTools.defaultFontPixelHeight * 0.75
+                color: "#CC700000"
+                border.color: "#FFFFFF"
+                border.width: 1
+
+                layer.enabled: true
+                layer.effect: DropShadow {
+                    horizontalOffset: 0
+                    verticalOffset: 4
+                    radius: 12
+                    samples: 25
+                    color: "#80000000"
+                }
             }
 
             contentItem: Loader {
@@ -718,24 +776,138 @@ FlightMap {
 
         Rectangle {
             id: bgRect
-            color: QGroundControl.settingsManager.appSettings.indoorPalette.rawValue ? "#88000000" : "#88ffffff"
-            radius: 6
+            color: "#E61A0A0A"
+            radius: ScreenTools.defaultFontPixelHeight * 0.5
+            border.color: "#FFD700"
             border.width: 1
+            opacity: 1.0
 
-            // Rectangle automatically sizes to ColumnLayout
-            implicitWidth:  column.implicitWidth  + ScreenTools.defaultFontPixelWidth * 2
+            layer.enabled: true
+            layer.effect: DropShadow {
+                horizontalOffset: 0
+                verticalOffset: 6
+                radius: 16
+                samples: 32
+                color: "#A0000000"
+            }
+
+            QGCPalette { id: menuPal; colorGroupEnabled: true }
+
+            property var    _vehicleCoord:      _root._activeVehicle ? _root._activeVehicle.coordinate : QtPositioning.coordinate()
+            property real   _distanceToTarget:  _vehicleCoord.isValid ? _vehicleCoord.distanceTo(mapClickCoord) : -1
+            property real   _bearingToTarget:   _vehicleCoord.isValid ? _vehicleCoord.azimuthTo(mapClickCoord) : -1
+            property real   _maxGotoDistance:   _root._flyViewSettings.maxGoToLocationDistance.rawValue
+            property bool   _gotoTooFar:        _distanceToTarget >= 0 && _distanceToTarget > _maxGotoDistance
+
+            implicitWidth:  Math.max(column.implicitWidth + ScreenTools.defaultFontPixelWidth * 2.5, ScreenTools.defaultFontPixelWidth * 70)
             implicitHeight: column.implicitHeight + ScreenTools.defaultFontPixelHeight * 2
 
             ColumnLayout {
                 id: column
                 anchors.centerIn: parent
-                anchors.margins: ScreenTools.defaultFontPixelWidth / 2
-                spacing: ScreenTools.defaultFontPixelWidth * 2
+                anchors.margins: ScreenTools.defaultFontPixelWidth * 1.25
+                spacing: ScreenTools.defaultFontPixelHeight * 0.6
+
+                // --- Header label ---
+                QGCLabel {
+                    Layout.fillWidth: true
+                    text: qsTr("MAP COMMAND")
+                    font.family: ScreenTools.fixedFontFamily
+                    font.bold: true
+                    font.pointSize: ScreenTools.defaultFontPointSize
+                    color: "#FFFFFF"
+                    horizontalAlignment: Text.AlignHCenter
+                }
+
+                // --- Technical readout (2x2 grid of rectangles) ---
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 0
+                    rowSpacing: 0
+                    Layout.fillWidth: true
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: ScreenTools.defaultFontPixelHeight * 2.6
+                        color: "#CC2A2A2A"
+                        border.color: "#80FFFFFF"
+                        border.width: 1
+                        radius: 0
+                        ColumnLayout {
+                            anchors.centerIn: parent
+                            spacing: 0
+                            QGCLabel { text: qsTr("LAT"); font.family: ScreenTools.fixedFontFamily; font.bold: true; font.pointSize: ScreenTools.defaultFontPointSize - 1; color: "#FFFFFF"; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
+                            QGCLabel { text: mapClickCoord.latitude.toFixed(6); font.family: ScreenTools.fixedFontFamily; color: "#FFFFFF"; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
+                        }
+                    }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: ScreenTools.defaultFontPixelHeight * 2.6
+                        color: "#CC2A2A2A"
+                        border.color: "#80FFFFFF"
+                        border.width: 1
+                        radius: 0
+                        ColumnLayout {
+                            anchors.centerIn: parent
+                            spacing: 0
+                            QGCLabel { text: qsTr("LON"); font.family: ScreenTools.fixedFontFamily; font.bold: true; font.pointSize: ScreenTools.defaultFontPointSize - 1; color: "#FFFFFF"; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
+                            QGCLabel { text: mapClickCoord.longitude.toFixed(6); font.family: ScreenTools.fixedFontFamily; color: "#FFFFFF"; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
+                        }
+                    }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: ScreenTools.defaultFontPixelHeight * 2.6
+                        color: "#CC2A2A2A"
+                        border.color: "#80FFFFFF"
+                        border.width: 1
+                        radius: 0
+                        visible: globals.guidedControllerFlyView.showGotoLocation
+                        ColumnLayout {
+                            anchors.centerIn: parent
+                            spacing: 0
+                            QGCLabel { text: qsTr("DIST"); font.family: ScreenTools.fixedFontFamily; font.bold: true; font.pointSize: ScreenTools.defaultFontPointSize - 1; color: "#FFFFFF"; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
+                            QGCLabel { text: _distanceToTarget >= 0 ? (QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_distanceToTarget).toFixed(1) + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString) : qsTr("N/A"); font.family: ScreenTools.fixedFontFamily; color: "#FFFFFF"; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
+                        }
+                    }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: ScreenTools.defaultFontPixelHeight * 2.6
+                        color: "#CC2A2A2A"
+                        border.color: "#80FFFFFF"
+                        border.width: 1
+                        radius: 0
+                        visible: globals.guidedControllerFlyView.showGotoLocation
+                        ColumnLayout {
+                            anchors.centerIn: parent
+                            spacing: 0
+                            QGCLabel { text: qsTr("BRG"); font.family: ScreenTools.fixedFontFamily; font.bold: true; font.pointSize: ScreenTools.defaultFontPointSize - 1; color: "#FFFFFF"; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
+                            QGCLabel { text: _bearingToTarget >= 0 ? (_bearingToTarget.toFixed(0) + "°") : qsTr("N/A"); font.family: ScreenTools.fixedFontFamily; color: "#FFFFFF"; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
+                        }
+                    }
+                }
+
+                // --- Warning ---
+                QGCLabel {
+                    Layout.fillWidth: true
+                    visible: globals.guidedControllerFlyView.showGotoLocation && _gotoTooFar
+                    wrapMode: Text.WordWrap
+                    color: "#FF6B6B"
+                    font.family: ScreenTools.fixedFontFamily
+                    font.bold: true
+                    text: qsTr("!! TARGET BEYOND MAX RANGE (%1 %2)").arg(QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_maxGotoDistance).toFixed(0)).arg(QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString)
+                }
+
+                // --- Separator ---
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: "#40FFFFFF"
+                }
 
                 // --- Edit mode buttons ---
                 QGCButton {
                     Layout.fillWidth: true
-                    text: qsTr("Add waypoint D%1").arg(_dwModel.count + 1)
+                    text: qsTr("ADD WP D%1").arg(_dwModel.count + 1)
                     visible: missionEditMode
                     onClicked: {
                         if (popup.opened) popup.close()
@@ -745,7 +917,7 @@ FlightMap {
                 }
                 QGCButton {
                     Layout.fillWidth: true
-                    text: qsTr("Undo last")
+                    text: qsTr("UNDO LAST")
                     visible: missionEditMode && _dwModel.count > 0
                     onClicked: {
                         if (popup.opened) popup.close()
@@ -755,7 +927,7 @@ FlightMap {
                 }
                 QGCButton {
                     Layout.fillWidth: true
-                    text: qsTr("Clear all (%1)").arg(_dwModel.count)
+                    text: qsTr("CLEAR ALL (%1)").arg(_dwModel.count)
                     visible: missionEditMode && _dwModel.count > 0
                     onClicked: {
                         if (popup.opened) popup.close()
@@ -764,69 +936,358 @@ FlightMap {
                     }
                 }
 
-                // --- Normal mode buttons (always visible) ---
-                QGCButton {
+                // --- Normal mode buttons in 2-column grid ---
+                GridLayout {
+                    id: gridLayout
+                    columns: 2
+                    columnSpacing: ScreenTools.defaultFontPixelWidth
+                    rowSpacing: ScreenTools.defaultFontPixelHeight / 2
                     Layout.fillWidth: true
-                    text: qsTr("Go to location")
-                    visible: globals.guidedControllerFlyView.showGotoLocation
-                    onClicked: {
-                        if (popup.opened) popup.close()
-                        gotoLocationItem.show(mapClickCoord)
-                        globals.guidedControllerFlyView.confirmAction(
-                            globals.guidedControllerFlyView.actionGoto,
-                            mapClickCoord,
-                            gotoLocationItem
-                        )
+
+                    QGCButton {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 24
+                        text: qsTr("FLY HERE")
+                        iconSource: "/res/ArrowRight.svg"
+                        visible: globals.guidedControllerFlyView.showGotoLocation
+                        enabled: !_gotoTooFar
+                        heightFactor: 0.6
+                        Shape {
+                            anchors.centerIn: parent
+                            width: parent.width + 8
+                            height: parent.height + 8
+                            ShapePath {
+                                strokeColor: "#700000"
+                                strokeWidth: 2
+                                fillColor: "transparent"
+                                PathAngleArc {
+                                    centerX: parent.width / 2
+                                    centerY: parent.height / 2
+                                    radiusX: parent.width / 2
+                                    radiusY: parent.height / 2
+                                    startAngle: 0
+                                    sweepAngle: 90
+                                }
+                            }
+                            RotationAnimation on rotation { from: 0; to: 360; duration: 1500; loops: Animation.Infinite; running: parent.enabled }
+                        }
+                        background: Rectangle {
+                            color: parent.pressed ? "#4A0000" : (parent.hovered ? "#8B0000" : "#700000")
+                            border.color: "#FFFFFF"
+                            border.width: 1
+                            radius: ScreenTools.defaultFontPixelHeight * 0.3
+                        }
+                        contentItem: Row {
+                            property var btn: parent
+                            spacing: ScreenTools.defaultFontPixelWidth / 2
+                            anchors.centerIn: parent
+                            QGCColoredImage {
+                                source: parent.parent.iconSource
+                                height: ScreenTools.defaultFontPixelHeight
+                                width: height
+                                color: "#FFFFFF"
+                                fillMode: Image.PreserveAspectFit
+                                sourceSize.height: height
+                                visible: parent.parent.iconSource !== ""
+                            }
+                            Text {
+                                text: parent.parent.text
+                                color: "#FFFFFF"
+                                font.family: ScreenTools.fixedFontFamily
+                                font.bold: true
+                                font.pointSize: ScreenTools.defaultFontPointSize - 1
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        onClicked: {
+                            if (popup.opened) popup.close()
+                            gotoLocationItem.show(mapClickCoord)
+                            globals.guidedControllerFlyView.confirmAction(
+                                globals.guidedControllerFlyView.actionGoto,
+                                mapClickCoord,
+                                gotoLocationItem
+                            )
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 24
+                        text: qsTr("FLY HERE AT ALT")
+                        iconSource: "/res/ArrowRight.svg"
+                        visible: globals.guidedControllerFlyView.showGotoLocation
+                        enabled: !_gotoTooFar
+                        heightFactor: 0.6
+                        Shape {
+                            anchors.centerIn: parent
+                            width: parent.width + 8
+                            height: parent.height + 8
+                            ShapePath {
+                                strokeColor: "#700000"
+                                strokeWidth: 2
+                                fillColor: "transparent"
+                                PathAngleArc {
+                                    centerX: parent.width / 2
+                                    centerY: parent.height / 2
+                                    radiusX: parent.width / 2
+                                    radiusY: parent.height / 2
+                                    startAngle: 0
+                                    sweepAngle: 90
+                                }
+                            }
+                            RotationAnimation on rotation { from: 0; to: 360; duration: 1500; loops: Animation.Infinite; running: parent.enabled }
+                        }
+                        background: Rectangle {
+                            color: parent.pressed ? "#4A0000" : (parent.hovered ? "#8B0000" : "#700000")
+                            border.color: "#FFFFFF"
+                            border.width: 1
+                            radius: ScreenTools.defaultFontPixelHeight * 0.3
+                        }
+                        contentItem: Row {
+                            property var btn: parent
+                            spacing: ScreenTools.defaultFontPixelWidth / 2
+                            anchors.centerIn: parent
+                            QGCColoredImage {
+                                source: parent.parent.iconSource
+                                height: ScreenTools.defaultFontPixelHeight
+                                width: height
+                                color: "#FFFFFF"
+                                fillMode: Image.PreserveAspectFit
+                                sourceSize.height: height
+                                visible: parent.parent.iconSource !== ""
+                            }
+                            Text {
+                                text: parent.parent.text
+                                color: "#FFFFFF"
+                                font.family: ScreenTools.fixedFontFamily
+                                font.bold: true
+                                font.pointSize: ScreenTools.defaultFontPointSize - 1
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        onClicked: {
+                            if (popup.opened) popup.close()
+                            gotoLocationItem.show(mapClickCoord)
+                            globals.guidedControllerFlyView.confirmAction(
+                                globals.guidedControllerFlyView.actionGotoAltitude,
+                                mapClickCoord,
+                                gotoLocationItem
+                            )
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 24
+                        text: qsTr("ORBIT")
+                        iconSource: "/res/clockwise-arrow.svg"
+                        visible: globals.guidedControllerFlyView.showOrbit
+                        heightFactor: 0.6
+                        Shape {
+                            anchors.centerIn: parent
+                            width: parent.width + 8
+                            height: parent.height + 8
+                            ShapePath {
+                                strokeColor: "#700000"
+                                strokeWidth: 2
+                                fillColor: "transparent"
+                                PathAngleArc {
+                                    centerX: parent.width / 2
+                                    centerY: parent.height / 2
+                                    radiusX: parent.width / 2
+                                    radiusY: parent.height / 2
+                                    startAngle: 0
+                                    sweepAngle: 90
+                                }
+                            }
+                            RotationAnimation on rotation { from: 0; to: 360; duration: 1500; loops: Animation.Infinite; running: parent.enabled }
+                        }
+                        background: Rectangle {
+                            color: parent.pressed ? "#4A0000" : (parent.hovered ? "#8B0000" : "#700000")
+                            border.color: "#FFFFFF"
+                            border.width: 1
+                            radius: ScreenTools.defaultFontPixelHeight * 0.3
+                        }
+                        contentItem: Row {
+                            property var btn: parent
+                            spacing: ScreenTools.defaultFontPixelWidth / 2
+                            anchors.centerIn: parent
+                            QGCColoredImage {
+                                source: parent.parent.iconSource
+                                height: ScreenTools.defaultFontPixelHeight
+                                width: height
+                                color: "#FFFFFF"
+                                fillMode: Image.PreserveAspectFit
+                                sourceSize.height: height
+                                visible: parent.parent.iconSource !== ""
+                            }
+                            Text {
+                                text: parent.parent.text
+                                color: "#FFFFFF"
+                                font.family: ScreenTools.fixedFontFamily
+                                font.bold: true
+                                font.pointSize: ScreenTools.defaultFontPointSize - 1
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        onClicked: {
+                            if (popup.opened) popup.close()
+                            orbitMapCircle.show(mapClickCoord)
+                            globals.guidedControllerFlyView.confirmAction(
+                                globals.guidedControllerFlyView.actionOrbit,
+                                mapClickCoord,
+                                orbitMapCircle
+                            )
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 24
+                        text: qsTr("ROI")
+                        iconSource: "/res/target_icon"
+                        visible: globals.guidedControllerFlyView.showROI
+                        heightFactor: 0.6
+                        Shape {
+                            anchors.centerIn: parent
+                            width: parent.width + 8
+                            height: parent.height + 8
+                            ShapePath {
+                                strokeColor: "#700000"
+                                strokeWidth: 2
+                                fillColor: "transparent"
+                                PathAngleArc {
+                                    centerX: parent.width / 2
+                                    centerY: parent.height / 2
+                                    radiusX: parent.width / 2
+                                    radiusY: parent.height / 2
+                                    startAngle: 0
+                                    sweepAngle: 90
+                                }
+                            }
+                            RotationAnimation on rotation { from: 0; to: 360; duration: 1500; loops: Animation.Infinite; running: parent.enabled }
+                        }
+                        background: Rectangle {
+                            color: parent.pressed ? "#4A0000" : (parent.hovered ? "#8B0000" : "#700000")
+                            border.color: "#FFFFFF"
+                            border.width: 1
+                            radius: ScreenTools.defaultFontPixelHeight * 0.3
+                        }
+                        contentItem: Row {
+                            property var btn: parent
+                            spacing: ScreenTools.defaultFontPixelWidth / 2
+                            anchors.centerIn: parent
+                            QGCColoredImage {
+                                source: parent.parent.iconSource
+                                height: ScreenTools.defaultFontPixelHeight
+                                width: height
+                                color: "#FFFFFF"
+                                fillMode: Image.PreserveAspectFit
+                                sourceSize.height: height
+                                visible: parent.parent.iconSource !== ""
+                            }
+                            Text {
+                                text: parent.parent.text
+                                color: "#FFFFFF"
+                                font.family: ScreenTools.fixedFontFamily
+                                font.bold: true
+                                font.pointSize: ScreenTools.defaultFontPointSize - 1
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        onClicked: {
+                            if (popup.opened) popup.close()
+                            globals.guidedControllerFlyView.executeAction(
+                                globals.guidedControllerFlyView.actionROI,
+                                mapClickCoord,
+                                0,
+                                false
+                            )
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 24
+                        text: qsTr("SET HOME HERE")
+                        iconSource: "/res/ta_icon"
+                        visible: globals.guidedControllerFlyView.showSetHome
+                        heightFactor: 0.6
+                        Shape {
+                            anchors.centerIn: parent
+                            width: parent.width + 8
+                            height: parent.height + 8
+                            ShapePath {
+                                strokeColor: "#700000"
+                                strokeWidth: 2
+                                fillColor: "transparent"
+                                PathAngleArc {
+                                    centerX: parent.width / 2
+                                    centerY: parent.height / 2
+                                    radiusX: parent.width / 2
+                                    radiusY: parent.height / 2
+                                    startAngle: 0
+                                    sweepAngle: 90
+                                }
+                            }
+                            RotationAnimation on rotation { from: 0; to: 360; duration: 1500; loops: Animation.Infinite; running: parent.enabled }
+                        }
+                        background: Rectangle {
+                            color: parent.pressed ? "#4A0000" : (parent.hovered ? "#8B0000" : "#700000")
+                            border.color: "#FFFFFF"
+                            border.width: 1
+                            radius: ScreenTools.defaultFontPixelHeight * 0.3
+                        }
+                        contentItem: Row {
+                            property var btn: parent
+                            spacing: ScreenTools.defaultFontPixelWidth / 2
+                            anchors.centerIn: parent
+                            QGCColoredImage {
+                                source: parent.parent.iconSource
+                                height: ScreenTools.defaultFontPixelHeight
+                                width: height
+                                color: "#FFFFFF"
+                                fillMode: Image.PreserveAspectFit
+                                sourceSize.height: height
+                                visible: parent.parent.iconSource !== ""
+                            }
+                            Text {
+                                text: parent.parent.text
+                                color: "#FFFFFF"
+                                font.family: ScreenTools.fixedFontFamily
+                                font.bold: true
+                                font.pointSize: ScreenTools.defaultFontPointSize - 1
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        onClicked: {
+                            if (popup.opened) popup.close()
+                            globals.guidedControllerFlyView.confirmAction(
+                                globals.guidedControllerFlyView.actionSetHome,
+                                mapClickCoord
+                            )
+                        }
                     }
                 }
 
-                QGCButton {
+                // --- Footer ---
+                Rectangle {
                     Layout.fillWidth: true
-                    text: qsTr("Orbit at location")
-                    visible: globals.guidedControllerFlyView.showOrbit
-                    onClicked: {
-                        if (popup.opened) popup.close()
-                        orbitMapCircle.show(mapClickCoord)
-                        globals.guidedControllerFlyView.confirmAction(
-                            globals.guidedControllerFlyView.actionOrbit,
-                            mapClickCoord,
-                            orbitMapCircle
-                        )
-                    }
+                    height: 1
+                    color: "#40FFFFFF"
                 }
-
-                QGCButton {
+                QGCLabel {
                     Layout.fillWidth: true
-                    text: qsTr("ROI at location")
-                    visible: globals.guidedControllerFlyView.showROI
-                    onClicked: {
-                        if (popup.opened) popup.close()
-                        globals.guidedControllerFlyView.executeAction(
-                            globals.guidedControllerFlyView.actionROI,
-                            mapClickCoord,
-                            0,
-                            false
-                        )
-                    }
-                }
-
-                QGCButton {
-                    Layout.fillWidth: true
-                    text: qsTr("Set home here")
-                    visible: globals.guidedControllerFlyView.showSetHome
-                    onClicked: {
-                        if (popup.opened) popup.close()
-                        globals.guidedControllerFlyView.confirmAction(
-                            globals.guidedControllerFlyView.actionSetHome,
-                            mapClickCoord
-                        )
-                    }
-                }
-
-                ColumnLayout {
-                    spacing: ScreenTools.defaultFontPixelWidth / 2
-                    QGCLabel { text: qsTr("Lat: %1").arg(mapClickCoord.latitude.toFixed(6)); font.bold: true; font.italic: true; color: "yellow"; font.pointSize: ScreenTools.isMobile ? 8 : 10 }
-                    QGCLabel { text: qsTr("Lon: %1").arg(mapClickCoord.longitude.toFixed(6)); font.bold: true; font.italic: true; color: "yellow"; font.pointSize: ScreenTools.isMobile ? 8 : 10 }
+                    text: qsTr("TAP OUTSIDE TO CLOSE")
+                    font.family: ScreenTools.fixedFontFamily
+                    font.pointSize: ScreenTools.defaultFontPointSize - 2
+                    color: "#80FFFFFF"
+                    horizontalAlignment: Text.AlignHCenter
                 }
             }
         }
@@ -1005,214 +1466,214 @@ FlightMap {
     //     }
     // }
 
-    Rectangle {
-        width: colLay.width + ScreenTools.defaultFontPixelWidth
-        height: colLay.height + ScreenTools.defaultFontPixelHeight
-        anchors.right: parent.right
-        anchors.verticalCenter: ScreenTools.isMobile ? undefined : parent.verticalCenter
-        anchors.bottom: ScreenTools.isMobile ? parent.bottom : undefined
-        anchors.bottomMargin: ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 6 : undefined
-        color: qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1, 1, 1, 0.5) : Qt.rgba(0, 0, 0, 0.5)
-        anchors.margins: ScreenTools.defaultFontPixelWidth
-        radius: ScreenTools.defaultFontPixelWidth / 2
+    // Rectangle {
+    //     width: colLay.width + ScreenTools.defaultFontPixelWidth
+    //     height: colLay.height + ScreenTools.defaultFontPixelHeight
+    //     anchors.right: parent.right
+    //     anchors.verticalCenter: ScreenTools.isMobile ? undefined : parent.verticalCenter
+    //     anchors.bottom: ScreenTools.isMobile ? parent.bottom : undefined
+    //     anchors.bottomMargin: ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 6 : undefined
+    //     color: qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1, 1, 1, 0.5) : Qt.rgba(0, 0, 0, 0.5)
+    //     anchors.margins: ScreenTools.defaultFontPixelWidth
+    //     radius: ScreenTools.defaultFontPixelWidth / 2
 
-        ColumnLayout {
-            id: colLay
-            anchors.centerIn: parent
-            QGCColoredImage {
-                id: dyn_bnutton
-                // text: missionEditMode ?
-                //     qsTr("Execute Plan (%1)").arg(_dwModel.count) :
-                //     qsTr("Edit Mission")
-                source: missionEditMode ? "/res/exe_icon" :"/res/dy_icon"
-                enabled: !missionEditMode || _dwModel.count > 0
-                width: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth * 3.2 : ScreenTools.defaultFontPixelWidth * 5
-                height: width
-                Layout.fillWidth: true
+    //     ColumnLayout {
+    //         id: colLay
+    //         anchors.centerIn: parent
+    //         QGCColoredImage {
+    //             id: dyn_bnutton
+    //             // text: missionEditMode ?
+    //             //     qsTr("Execute Plan (%1)").arg(_dwModel.count) :
+    //             //     qsTr("Edit Mission")
+    //             source: missionEditMode ? "/res/exe_icon" :"/res/dy_icon"
+    //             enabled: !missionEditMode || _dwModel.count > 0
+    //             width: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth * 3.2 : ScreenTools.defaultFontPixelWidth * 5
+    //             height: width
+    //             Layout.fillWidth: true
 
-                QGCMouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        if (!missionEditMode) {
-                            missionEditMode = true
-                            _oldRemainingPath = []
-                            _dynamicPath = []
-                            _firstDynamicSeq = -1
-                            _lastDynamicSeq = -1
-                            _dynamicCompleted = false
-                            _persistentDWModel.clear()
-                            _oldRemainingWPModel.clear()
-                        } else {
-                            var missionController = _planMasterController.missionController
-                            _pendingInsertIndex = missionController.currentMissionIndex + 1
-                            _firstDynamicSeq = _pendingInsertIndex
-                            _lastDynamicSeq = _pendingInsertIndex + _dwModel.count - 1
-                            _dynamicCompleted = false
-                            // Capture old remaining waypoints BEFORE insertion
-                            var oldPath = []
-                            _oldRemainingWPModel.clear()
-                            for (var j = _pendingInsertIndex; j < missionController.visualItems.count; j++) {
-                                var vi = missionController.visualItems.get(j)
-                                if (vi.coordinate && vi.coordinate.isValid) {
-                                    oldPath.push(vi.coordinate)
-                                    _oldRemainingWPModel.append({
-                                        latitude: vi.coordinate.latitude,
-                                        longitude: vi.coordinate.longitude,
-                                        originalSeq: vi.sequenceNumber
-                                    })
-                                }
-                            }
-                            _oldRemainingPath = oldPath
-                            // Insert dynamic waypoints into mission
-                            for (var i = 0; i < _dwModel.count; i++) {
-                                var item = _dwModel.get(i)
-                                var coord = QtPositioning.coordinate(item.latitude, item.longitude)
-                                missionController.insertSimpleMissionItem(coord, _pendingInsertIndex + i, false)
-                            }
-                            _planMasterController.sendToVehicle()
-                            missionEditMode = false
-                            // Save persistent D markers
-                            _persistentDWModel.clear()
-                            for (var k = 0; k < _dwModel.count; k++) {
-                                var dw = _dwModel.get(k)
-                                _persistentDWModel.append({ latitude: dw.latitude, longitude: dw.longitude })
-                            }
-                            _dwModel.clear()
-                        }
-                    }
-                }
-            }
+    //             QGCMouseArea {
+    //                 anchors.fill: parent
+    //                 onClicked: {
+    //                     if (!missionEditMode) {
+    //                         missionEditMode = true
+    //                         _oldRemainingPath = []
+    //                         _dynamicPath = []
+    //                         _firstDynamicSeq = -1
+    //                         _lastDynamicSeq = -1
+    //                         _dynamicCompleted = false
+    //                         _persistentDWModel.clear()
+    //                         _oldRemainingWPModel.clear()
+    //                     } else {
+    //                         var missionController = _planMasterController.missionController
+    //                         _pendingInsertIndex = missionController.currentMissionIndex + 1
+    //                         _firstDynamicSeq = _pendingInsertIndex
+    //                         _lastDynamicSeq = _pendingInsertIndex + _dwModel.count - 1
+    //                         _dynamicCompleted = false
+    //                         // Capture old remaining waypoints BEFORE insertion
+    //                         var oldPath = []
+    //                         _oldRemainingWPModel.clear()
+    //                         for (var j = _pendingInsertIndex; j < missionController.visualItems.count; j++) {
+    //                             var vi = missionController.visualItems.get(j)
+    //                             if (vi.coordinate && vi.coordinate.isValid) {
+    //                                 oldPath.push(vi.coordinate)
+    //                                 _oldRemainingWPModel.append({
+    //                                     latitude: vi.coordinate.latitude,
+    //                                     longitude: vi.coordinate.longitude,
+    //                                     originalSeq: vi.sequenceNumber
+    //                                 })
+    //                             }
+    //                         }
+    //                         _oldRemainingPath = oldPath
+    //                         // Insert dynamic waypoints into mission
+    //                         for (var i = 0; i < _dwModel.count; i++) {
+    //                             var item = _dwModel.get(i)
+    //                             var coord = QtPositioning.coordinate(item.latitude, item.longitude)
+    //                             missionController.insertSimpleMissionItem(coord, _pendingInsertIndex + i, false)
+    //                         }
+    //                         _planMasterController.sendToVehicle()
+    //                         missionEditMode = false
+    //                         // Save persistent D markers
+    //                         _persistentDWModel.clear()
+    //                         for (var k = 0; k < _dwModel.count; k++) {
+    //                             var dw = _dwModel.get(k)
+    //                             _persistentDWModel.append({ latitude: dw.latitude, longitude: dw.longitude })
+    //                         }
+    //                         _dwModel.clear()
+    //                     }
+    //                 }
+    //             }
+    //         }
 
-            QGCLabel {
-                text: missionEditMode ?
-                    qsTr("Execute")/*.arg(_dwModel.count)*/ :
-                    qsTr("Edit")
-                Layout.fillWidth: true
-                font.pointSize: ScreenTools.smallFontPointSize
-                //visible: missionEditMode
-            }
+    //         QGCLabel {
+    //             text: missionEditMode ?
+    //                 qsTr("Execute")/*.arg(_dwModel.count)*/ :
+    //                 qsTr("Edit")
+    //             Layout.fillWidth: true
+    //             font.pointSize: ScreenTools.smallFontPointSize
+    //             //visible: missionEditMode
+    //         }
 
-            QGCColoredImage {
-                //text: qsTr("Cancel Edit")
-                source:             "/res/XDelete.svg"
-                Layout.fillWidth: true
-                width: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth * 3.2 : ScreenTools.defaultFontPixelWidth * 5
-                height: width
-                visible: missionEditMode
+    //         QGCColoredImage {
+    //             //text: qsTr("Cancel Edit")
+    //             source:             "/res/XDelete.svg"
+    //             Layout.fillWidth: true
+    //             width: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth * 3.2 : ScreenTools.defaultFontPixelWidth * 5
+    //             height: width
+    //             visible: missionEditMode
 
-                QGCMouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        missionEditMode = false
-                        _dwModel.clear()
-                        _pendingInsertIndex = -1
-                        _oldRemainingPath = []
-                        _dynamicPath = []
-                        _firstDynamicSeq = -1
-                        _lastDynamicSeq = -1
-                        _dynamicCompleted = false
-                        _persistentDWModel.clear()
-                        _oldRemainingWPModel.clear()
-                    }
-                }
-            }
+    //             QGCMouseArea {
+    //                 anchors.fill: parent
+    //                 onClicked: {
+    //                     missionEditMode = false
+    //                     _dwModel.clear()
+    //                     _pendingInsertIndex = -1
+    //                     _oldRemainingPath = []
+    //                     _dynamicPath = []
+    //                     _firstDynamicSeq = -1
+    //                     _lastDynamicSeq = -1
+    //                     _dynamicCompleted = false
+    //                     _persistentDWModel.clear()
+    //                     _oldRemainingWPModel.clear()
+    //                 }
+    //             }
+    //         }
 
-            QGCLabel {
-                text: "Cancel"
-                Layout.fillWidth: true
-                visible: missionEditMode
-                font.pointSize: ScreenTools.smallFontPointSize
-            }
-        }
-    }
+    //         QGCLabel {
+    //             text: "Cancel"
+    //             Layout.fillWidth: true
+    //             visible: missionEditMode
+    //             font.pointSize: ScreenTools.smallFontPointSize
+    //         }
+    //     }
+    // }
 
-    Connections {
-        target: _planMasterController ? _planMasterController.missionController : null
-        onSendComplete: {
-            if (_pendingInsertIndex > 0) {
-                _activeVehicle.setCurrentMissionSequence(_pendingInsertIndex)
-                _pendingInsertIndex = -1
-            }
-        }
-    }
+    // Connections {
+    //     target: _planMasterController ? _planMasterController.missionController : null
+    //     onSendComplete: {
+    //         if (_pendingInsertIndex > 0) {
+    //             _activeVehicle.setCurrentMissionSequence(_pendingInsertIndex)
+    //             _pendingInsertIndex = -1
+    //         }
+    //     }
+    // }
 
-    // Monitor dynamic mission progress
-    Timer {
-        id: _dynamicMonitor
-        interval: 200
-        running: _firstDynamicSeq > 0 && !missionEditMode
-        repeat: true
-        onTriggered: {
-            if (!_dynamicCompleted && _activeVehicle) {
-                var cur = _planMasterController.missionController.currentMissionIndex
-                if (cur > _lastDynamicSeq) {
-                    _dynamicCompleted = true
-                    _activeVehicle.setCurrentMissionSequence(_lastDynamicSeq)
-                    _holdTimer.start()
-                    _completionDialog.open()
-                }
-            }
-        }
-    }
+    // // Monitor dynamic mission progress
+    // Timer {
+    //     id: _dynamicMonitor
+    //     interval: 200
+    //     running: _firstDynamicSeq > 0 && !missionEditMode
+    //     repeat: true
+    //     onTriggered: {
+    //         if (!_dynamicCompleted && _activeVehicle) {
+    //             var cur = _planMasterController.missionController.currentMissionIndex
+    //             if (cur > _lastDynamicSeq) {
+    //                 _dynamicCompleted = true
+    //                 _activeVehicle.setCurrentMissionSequence(_lastDynamicSeq)
+    //                 _holdTimer.start()
+    //                 _completionDialog.open()
+    //             }
+    //         }
+    //     }
+    // }
 
-    // Hold position by repeatedly targeting the last dynamic WP
-    Timer {
-        id: _holdTimer
-        interval: 500
-        repeat: true
-        running: false
-        onTriggered: {
-            if (_completionDialog.visible && _firstDynamicSeq > 0) {
-                _activeVehicle.setCurrentMissionSequence(_lastDynamicSeq)
-            }
-        }
-    }
+    // // Hold position by repeatedly targeting the last dynamic WP
+    // Timer {
+    //     id: _holdTimer
+    //     interval: 500
+    //     repeat: true
+    //     running: false
+    //     onTriggered: {
+    //         if (_completionDialog.visible && _firstDynamicSeq > 0) {
+    //             _activeVehicle.setCurrentMissionSequence(_lastDynamicSeq)
+    //         }
+    //     }
+    // }
 
-    // Completion dialog
-    Popup {
-        id: _completionDialog
-        modal: true
-        closePolicy: Popup.NoAutoClose
-        x: (parent.width - width) / 2
-        y: (parent.height - height) / 2
-        width: ScreenTools.defaultFontPixelWidth * 30
-        background: Rectangle {
-            color: qgcPal.window
-            radius: ScreenTools.defaultFontPixelHeight / 4
-        }
-        ColumnLayout {
-            anchors.centerIn: parent
-            spacing: ScreenTools.defaultFontPixelWidth
-            QGCLabel {
-                text: qsTr("Dynamic mission completed")
-                font.bold: true
-                font.pointSize: ScreenTools.defaultFontPointSize + 2
-            }
-            QGCLabel {
-                text: qsTr("Choose next action:")
-            }
-            RowLayout {
-                spacing: ScreenTools.defaultFontPixelWidth
-                QGCButton {
-                    text: qsTr("Replay Dynamic")
-                    onClicked: {
-                        _holdTimer.stop()
-                        _activeVehicle.setCurrentMissionSequence(_firstDynamicSeq)
-                        _dynamicCompleted = false
-                        _completionDialog.close()
-                    }
-                }
-                QGCButton {
-                    text: qsTr("Resume Original")
-                    onClicked: {
-                        _holdTimer.stop()
-                        _activeVehicle.setCurrentMissionSequence(_lastDynamicSeq + 1)
-                        _completionDialog.close()
-                    }
-                }
-            }
-        }
-    }
+    // // Completion dialog
+    // Popup {
+    //     id: _completionDialog
+    //     modal: true
+    //     closePolicy: Popup.NoAutoClose
+    //     x: (parent.width - width) / 2
+    //     y: (parent.height - height) / 2
+    //     width: ScreenTools.defaultFontPixelWidth * 30
+    //     background: Rectangle {
+    //         color: qgcPal.window
+    //         radius: ScreenTools.defaultFontPixelHeight / 4
+    //     }
+    //     ColumnLayout {
+    //         anchors.centerIn: parent
+    //         spacing: ScreenTools.defaultFontPixelWidth
+    //         QGCLabel {
+    //             text: qsTr("Dynamic mission completed")
+    //             font.bold: true
+    //             font.pointSize: ScreenTools.defaultFontPointSize + 2
+    //         }
+    //         QGCLabel {
+    //             text: qsTr("Choose next action:")
+    //         }
+    //         RowLayout {
+    //             spacing: ScreenTools.defaultFontPixelWidth
+    //             QGCButton {
+    //                 text: qsTr("Replay Dynamic")
+    //                 onClicked: {
+    //                     _holdTimer.stop()
+    //                     _activeVehicle.setCurrentMissionSequence(_firstDynamicSeq)
+    //                     _dynamicCompleted = false
+    //                     _completionDialog.close()
+    //                 }
+    //             }
+    //             QGCButton {
+    //                 text: qsTr("Resume Original")
+    //                 onClicked: {
+    //                     _holdTimer.stop()
+    //                     _activeVehicle.setCurrentMissionSequence(_lastDynamicSeq + 1)
+    //                     _completionDialog.close()
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
     // Dynamic mission path (green, shown after Execute)
     MapPolyline {

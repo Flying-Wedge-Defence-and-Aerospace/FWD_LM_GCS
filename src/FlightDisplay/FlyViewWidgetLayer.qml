@@ -34,6 +34,7 @@ Item {
     property var    parentToolInsets
     property var    totalToolInsets:        _totalToolInsets
     property var    mapControl
+    property bool   mapIsFullScreen:        true
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property var    _planMasterController:  globals.planMasterControllerFlyView
@@ -64,7 +65,7 @@ Item {
         topEdgeCenterInset:     mapScale.topEdgeCenterInset
         topEdgeRightInset:      instrumentPanel ? instrumentPanel.topEdgeRightInset : 0
         bottomEdgeLeftInset:    virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeLeftInset : parentToolInsets.bottomEdgeLeftInset
-        bottomEdgeCenterInset:  telemetryPanel ? telemetryPanel.bottomEdgeCenterInset : 0
+        bottomEdgeCenterInset:  quickParamsPanel ? quickParamsPanel.height + _toolsMargin : 0
         bottomEdgeRightInset:   virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeRightInset : parentToolInsets.bottomEdgeRightInset
     }
 
@@ -281,13 +282,14 @@ Item {
 
     FlyViewToolStrip {
         id:                     toolStrip
-        anchors.leftMargin:     _toolsMargin /*+ parentToolInsets.leftEdgeCenterInset*/
-        anchors.topMargin:      _toolsMargin /*+ parentToolInsets.topEdgeLeftInset*/
+        // Keep the tool strip to the right of the 20% HUD column.
+        anchors.leftMargin:     parent.width * 0.20 + _toolsMargin
+        anchors.topMargin:      _toolsMargin
         anchors.left:           parent.left
         anchors.top:            parent.top
         z:                      QGroundControl.zOrderWidgets
         maxHeight:              parent.height/* - y - parentToolInsets.bottomEdgeLeftInset - _toolsMargin*/
-        visible:                /*!QGroundControl.videoManager.fullScreen*/ false
+        visible:                mapIsFullScreen && !QGroundControl.videoManager.fullScreen
 
         onDisplayPreFlightChecklist: preFlightChecklistPopup.createObject(mainWindow).open()
 

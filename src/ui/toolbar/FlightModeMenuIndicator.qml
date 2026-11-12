@@ -23,18 +23,8 @@ Item {
     property real fontPointSize: ScreenTools.largeFontPointSize
     property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
-    // Only show specific flight modes (case-insensitive matching)
-    property var _filteredFlightModes: _calcFilteredModes()
-    property var _allowedModes: ["stabilize","stabilized","loiter","hold","guided","auto","mission","altitude hold","altitude","depth hold","rtl","return","land","surface"]
-    function _calcFilteredModes() {
-        if (!activeVehicle) return []
-        return activeVehicle.flightModes.filter(function(m) { return _allowedModes.indexOf(m.toLowerCase()) !== -1 })
-    }
-    onActiveVehicleChanged: _filteredFlightModes = _calcFilteredModes()
-    Connections {
-        target: activeVehicle
-        onFlightModesChanged: _filteredFlightModes = _calcFilteredModes()
-    }
+    // Show every flight mode the vehicle reports as supported.
+    property var _filteredFlightModes: activeVehicle ? activeVehicle.flightModes : []
 
     Component {
         id: flightModeMenu

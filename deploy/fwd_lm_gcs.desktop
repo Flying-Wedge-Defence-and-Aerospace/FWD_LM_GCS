@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=FWD_LM_GCS
+GenericName=Ground Control Station
+Comment=FWD Ground Control Station
+Icon=fwd_lm_gcs
+Exec=AppRun
+Terminal=false
+Categories=Utility;
+Keywords=MAVLink;UAS;GCS;drone;

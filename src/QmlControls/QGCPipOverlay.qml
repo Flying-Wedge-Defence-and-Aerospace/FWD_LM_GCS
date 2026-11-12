@@ -60,6 +60,7 @@ Item {
     }
 
     function _initForItems() {
+        if (!item1) return
         var item1IsFull = QGroundControl.loadBoolGlobalSetting(item1IsFullSettingsKey, true)
         if (item1 && item2) {
             item1.pipState.state = item1IsFull ? item1.pipState.fullState : item1.pipState.pipState

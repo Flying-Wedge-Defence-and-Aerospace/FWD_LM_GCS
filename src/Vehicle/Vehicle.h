@@ -294,6 +294,8 @@ public:
     Q_PROPERTY(Fact* airSpeed           READ airSpeed           CONSTANT)
     Q_PROPERTY(Fact* airSpeedSetpoint   READ airSpeedSetpoint   CONSTANT)
     Q_PROPERTY(Fact* climbRate          READ climbRate          CONSTANT)
+    Q_PROPERTY(Fact* aoa                READ aoa                CONSTANT)
+    Q_PROPERTY(Fact* rcChannel3Percent  READ rcChannel3Percent  CONSTANT)
     Q_PROPERTY(Fact* altitudeRelative   READ altitudeRelative   CONSTANT)
     Q_PROPERTY(Fact* altitudeAMSL       READ altitudeAMSL       CONSTANT)
     Q_PROPERTY(Fact* altitudeAboveTerr  READ altitudeAboveTerr  CONSTANT)
@@ -462,6 +464,8 @@ public:
 
     /// Removes the vehicle from the system
     Q_INVOKABLE void closeVehicle(void) { _vehicleLinkManager->closeVehicle(); }
+
+    Q_INVOKABLE void sendParameter(const QString& paramName, double value);
 
     /// Trigger camera using MAV_CMD_DO_DIGICAM_CONTROL command
     Q_INVOKABLE void triggerSimpleCamera(void);
@@ -701,6 +705,8 @@ public:
     Fact* airSpeedSetpoint                  () { return &_airSpeedSetpointFact; }
     Fact* groundSpeed                       () { return &_groundSpeedFact; }
     Fact* climbRate                         () { return &_climbRateFact; }
+    Fact* aoa                               () { return &_aoaFact; }
+    Fact* rcChannel3Percent                 () { return &_rcChannel3PercentFact; }
     Fact* altitudeRelative                  () { return &_altitudeRelativeFact; }
     Fact* altitudeAMSL                      () { return &_altitudeAMSLFact; }
     Fact* altitudeAboveTerr                 () { return &_altitudeAboveTerrFact; }
@@ -862,7 +868,7 @@ public:
     bool soloFirmware() const { return _soloFirmware; }
     void setSoloFirmware(bool soloFirmware);
 
-    int defaultComponentId() const{ return _defaultComponentId; }
+    Q_INVOKABLE int defaultComponentId() const{ return _defaultComponentId; }
 
     /// Sets the default component id for an offline editing vehicle
     void setOfflineEditingDefaultComponentId(int defaultComponentId);
@@ -1099,6 +1105,7 @@ private:
     void _handleAltitude                (mavlink_message_t& message);
     void _handleVfrHud                  (mavlink_message_t& message);
     void _handleNavControllerOutput     (mavlink_message_t& message);
+    void _handleAoaSsa                  (mavlink_message_t& message);
     void _handleHighLatency             (mavlink_message_t& message);
     void _handleHighLatency2            (mavlink_message_t& message);
     void _handleAttitudeWorker          (double rollRadians, double pitchRadians, double yawRadians);
@@ -1413,6 +1420,8 @@ private:
     Fact _airSpeedFact;
     Fact _airSpeedSetpointFact;
     Fact _climbRateFact;
+    Fact _aoaFact;
+    Fact _rcChannel3PercentFact;
     Fact _altitudeRelativeFact;
     Fact _altitudeAMSLFact;
     Fact _altitudeAboveTerrFact;
@@ -1474,6 +1483,8 @@ private:
     static const char* _airSpeedFactName;
     static const char* _airSpeedSetpointFactName;
     static const char* _climbRateFactName;
+    static const char* _aoaFactName;
+    static const char* _rcChannel3PercentFactName;
     static const char* _altitudeRelativeFactName;
     static const char* _altitudeAMSLFactName;
     static const char* _altitudeAboveTerrFactName;

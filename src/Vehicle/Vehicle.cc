@@ -87,6 +87,8 @@ const char* Vehicle::_xTrackErrorFactName =         "xTrackError";
 const char* Vehicle::_rangeFinderDistFactName =     "rangeFinderDist";
 const char* Vehicle::_groundSpeedFactName =         "groundSpeed";
 const char* Vehicle::_climbRateFactName =           "climbRate";
+const char* Vehicle::_aoaFactName =                 "aoa";
+const char* Vehicle::_rcChannel3PercentFactName =   "rcChannel3Percent";
 const char* Vehicle::_altitudeRelativeFactName =    "altitudeRelative";
 const char* Vehicle::_altitudeAMSLFactName =        "altitudeAMSL";
 const char* Vehicle::_altitudeAboveTerrFactName =   "altitudeAboveTerr";
@@ -153,6 +155,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _airSpeedFact                 (0, _airSpeedFactName,          FactMetaData::valueTypeDouble)
     , _airSpeedSetpointFact         (0, _airSpeedSetpointFactName,  FactMetaData::valueTypeDouble)
     , _climbRateFact                (0, _climbRateFactName,         FactMetaData::valueTypeDouble)
+    , _aoaFact                      (0, _aoaFactName,               FactMetaData::valueTypeDouble)
+    , _rcChannel3PercentFact        (0, _rcChannel3PercentFactName, FactMetaData::valueTypeDouble)
     , _altitudeRelativeFact         (0, _altitudeRelativeFactName,  FactMetaData::valueTypeDouble)
     , _altitudeAMSLFact             (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
     , _altitudeAboveTerrFact        (0, _altitudeAboveTerrFactName, FactMetaData::valueTypeDouble)
@@ -316,6 +320,8 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _airSpeedFact                     (0, _airSpeedFactName,          FactMetaData::valueTypeDouble)
     , _airSpeedSetpointFact             (0, _airSpeedSetpointFactName,  FactMetaData::valueTypeDouble)
     , _climbRateFact                    (0, _climbRateFactName,         FactMetaData::valueTypeDouble)
+    , _aoaFact                           (0, _aoaFactName,               FactMetaData::valueTypeDouble)
+    , _rcChannel3PercentFact             (0, _rcChannel3PercentFactName, FactMetaData::valueTypeDouble)
     , _altitudeRelativeFact             (0, _altitudeRelativeFactName,  FactMetaData::valueTypeDouble)
     , _altitudeAMSLFact                 (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
     , _altitudeAboveTerrFact            (0, _altitudeAboveTerrFactName, FactMetaData::valueTypeDouble)
@@ -453,6 +459,8 @@ void Vehicle::_commonInit()
     _addFact(&_airSpeedFact,            _airSpeedFactName);
     _addFact(&_airSpeedSetpointFact,    _airSpeedSetpointFactName);
     _addFact(&_climbRateFact,           _climbRateFactName);
+    _addFact(&_aoaFact,                 _aoaFactName);
+    _addFact(&_rcChannel3PercentFact,   _rcChannel3PercentFactName);
     _addFact(&_altitudeRelativeFact,    _altitudeRelativeFactName);
     _addFact(&_altitudeAMSLFact,        _altitudeAMSLFactName);
     _addFact(&_altitudeAboveTerrFact,   _altitudeAboveTerrFactName);
@@ -763,6 +771,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_VFR_HUD:
         _handleVfrHud(message);
         break;
+    case MAVLINK_MSG_ID_AOA_SSA:
+        _handleAoaSsa(message);
+        break;
     case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
         _handleNavControllerOutput(message);
         break;
@@ -1071,6 +1082,14 @@ void Vehicle::_handleVfrHud(mavlink_message_t& message)
     if (!qIsNaN(vfrHud.groundspeed) && !qIsNaN(_distanceToHomeFact.cookedValue().toDouble())) {
       _timeToHomeFact.setRawValue(_distanceToHomeFact.cookedValue().toDouble() / vfrHud.groundspeed);
     }
+}
+
+void Vehicle::_handleAoaSsa(mavlink_message_t& message)
+{
+    mavlink_aoa_ssa_t aoaSsa;
+    mavlink_msg_aoa_ssa_decode(&message, &aoaSsa);
+
+    _aoaFact.setRawValue(qIsNaN(aoaSsa.AOA) ? 0 : aoaSsa.AOA);
 }
 
 void Vehicle::_handleNavControllerOutput(mavlink_message_t& message)
@@ -1922,6 +1941,15 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
             pwmValues[i] = -1;
         }
     }
+
+    int ch3Pwm = pwmValues[2];
+    double ch3Percent = 0;
+    if (ch3Pwm >= 0) {
+        ch3Percent = (ch3Pwm - 1000.0) / 10.0;
+        if (ch3Percent < 0) ch3Percent = 0;
+        if (ch3Percent > 100) ch3Percent = 100;
+    }
+    _rcChannel3PercentFact.setRawValue(ch3Percent);
 
     emit remoteControlRSSIChanged(channels.rssi);
     emit rcChannelsChanged(channels.chancount, pwmValues);
@@ -2807,6 +2835,17 @@ bool Vehicle::hasGripper()  const
 void Vehicle::startMission()
 {
     _firmwarePlugin->startMission(this);
+}
+
+void Vehicle::sendParameter(const QString& paramName, double value)
+{
+    if (!_parameterManager) return;
+    Fact* fact = _parameterManager->getParameter(_defaultComponentId, paramName);
+    if (fact) {
+        fact->setRawValue(value);
+    } else {
+        qCWarning(VehicleLog) << "sendParameter: parameter not found:" << paramName;
+    }
 }
 
 void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord)

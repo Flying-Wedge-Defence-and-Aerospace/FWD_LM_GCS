@@ -252,10 +252,10 @@ Rectangle {
     id:         _root
     width:      ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth * 40 : ScreenTools.defaultFontPixelWidth * 50
     height:     mainLayout.height + (_margins * 6)
-    radius:     /*ScreenTools.defaultFontPixelWidth / 4*/ 10
-    color: QGroundControl.settingsManager.appSettings.indoorPalette.rawValue ? "#aa000000" : "#aaffffff"
+    radius:     10
+    color:      "#3B0A0A"
     visible:    false
-    border.color: "gray"
+    border.color: "#800000"
     border.width: 2
 
     property var    guidedController
@@ -278,6 +278,7 @@ Rectangle {
         if (visible) {
             slider.focus = true
         }
+        confirmButton.resetHold()
     }
 
     onHideTriggerChanged: {
@@ -296,7 +297,23 @@ Rectangle {
         }
     }
 
+    function confirmAction() {
+        visible = false
+        var sliderOutputValue = 0
+        if (guidedValueSlider.visible) {
+            sliderOutputValue = guidedValueSlider.getOutputValue()
+            guidedValueSlider.visible = false
+        }
+        hideTrigger = false
+        guidedController.executeAction(_root.action, _root.actionData, sliderOutputValue, _root.optionChecked)
+        if (mapIndicator) {
+            mapIndicator.actionConfirmed()
+            mapIndicator = undefined
+        }
+    }
+
     function confirmCancelled() {
+        confirmButton.resetHold()
         guidedValueSlider.visible = false
         visible = false
         hideTrigger = false
@@ -332,12 +349,14 @@ Rectangle {
             font.pointSize:         ScreenTools.mediumFontPointSize
             font.bold: true
             font.italic: true
+            color:                  "white"
         }
 
         QGCCheckBox {
             id:                 optionCheckBox
             Layout.alignment:   Qt.AlignHCenter
             text:               ""
+            textColor:          "white"
             visible:            text !== ""
         }
 
@@ -379,8 +398,8 @@ Rectangle {
 
         Rectangle {
             Layout.fillWidth: true
-            color: "gray"
-            height: 2
+            color: Qt.rgba(1, 1, 1, 0.25)
+            height: 1
         }
 
         RowLayout {
@@ -410,33 +429,83 @@ Rectangle {
             // }
 
             Rectangle {
+                id: confirmButton
                 height: slider.height + 20
                 width:  height
                 radius: height / 2
-                color:  qgcPal.primaryButton
+                color:  _emergencyAction ? "#b3001b" : "#800000"
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.25)
+
+                property bool holdActive: false
+                property bool holdCompleted: false
+                property real holdProgress: 0
+                property int holdDurationMs: _emergencyAction ? 2500 : 1500
+
+                function resetHold() {
+                    holdActive = false
+                    holdCompleted = false
+                    holdProgress = 0
+                }
+
+                Canvas {
+                    id: holdRing
+                    anchors.fill: parent
+                    anchors.margins: -5
+                    visible: confirmButton.holdProgress > 0
+                    onPaint: {
+                        var ctx = getContext("2d")
+                        ctx.clearRect(0, 0, width, height)
+                        ctx.beginPath()
+                        ctx.arc(width / 2, height / 2, Math.min(width, height) / 2 - 2, -Math.PI / 2, -Math.PI / 2 + (2 * Math.PI * confirmButton.holdProgress))
+                        ctx.lineWidth = 3
+                        ctx.strokeStyle = "white"
+                        ctx.stroke()
+                    }
+
+                    Connections {
+                        target: confirmButton
+                        function onHoldProgressChanged() { holdRing.requestPaint() }
+                    }
+                }
+
+                Timer {
+                    id: holdTimer
+                    interval: 16
+                    repeat: true
+                    running: confirmButton.holdActive && !confirmButton.holdCompleted && _root.visible
+                    onTriggered: {
+                        confirmButton.holdProgress += interval / confirmButton.holdDurationMs
+                        if (confirmButton.holdProgress >= 1.0) {
+                            confirmButton.holdProgress = 1.0
+                            confirmButton.holdCompleted = true
+                            confirmButton.holdActive = false
+                            stop()
+                            _root.confirmAction()
+                        }
+                    }
+                }
 
                 QGCColoredImage {
                     anchors.margins:    parent.height / 4
                     anchors.fill:       parent
                     source:             "/res/tick_icon"
                     fillMode:           Image.PreserveAspectFit
-                    color:              qgcPal.text
+                    color:              "white"
                 }
 
                 QGCMouseArea {
                     fillItem:   parent
-                    onClicked: {
-                        _root.visible = false
-                        var sliderOutputValue = 0
-                        if (guidedValueSlider.visible) {
-                            sliderOutputValue = guidedValueSlider.getOutputValue()
-                            guidedValueSlider.visible = false
-                        }
-                        hideTrigger = false
-                        guidedController.executeAction(_root.action, _root.actionData, sliderOutputValue, _root.optionChecked)
-                        if (mapIndicator) {
-                            mapIndicator.actionConfirmed()
-                            mapIndicator = undefined
+                    onPressedChanged: {
+                        if (pressed) {
+                            confirmButton.holdCompleted = false
+                            confirmButton.holdProgress = 0
+                            confirmButton.holdActive = true
+                        } else {
+                            confirmButton.holdActive = false
+                            if (!confirmButton.holdCompleted) {
+                                confirmButton.holdProgress = 0
+                            }
                         }
                     }
                 }
@@ -450,7 +519,12 @@ Rectangle {
             QGCLabel {
                 id:                 slider
                 //confirmText:        ScreenTools.isMobile ? qsTr("Slide to confirm") : qsTr("Slide or hold spacebar")
-                text: qsTr("Click for above action")
+                text: confirmButton.holdCompleted
+                      ? qsTr("Confirmed")
+                      : (confirmButton.holdActive
+                         ? qsTr("Keep holding… %1s").arg(((confirmButton.holdDurationMs * (1 - confirmButton.holdProgress)) / 1000).toFixed(1))
+                         : qsTr("Hold to confirm"))
+                color: "white"
                 font.pointSize: 10
                 font.bold: true
                 //Layout.fillWidth:   true
@@ -478,14 +552,16 @@ Rectangle {
                 height: slider.height + 20
                 width:  height
                 radius: height / 2
-                color:  qgcPal.primaryButton
+                color:  "#0d0d0d"
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.25)
 
                 QGCColoredImage {
                     anchors.margins:    parent.height / 4
                     anchors.fill:       parent
                     source:             "/res/XDelete.svg"
                     fillMode:           Image.PreserveAspectFit
-                    color:              qgcPal.text
+                    color:              "white"
                 }
 
                 QGCMouseArea {

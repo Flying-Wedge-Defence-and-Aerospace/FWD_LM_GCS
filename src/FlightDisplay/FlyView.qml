@@ -95,6 +95,7 @@ Item {
         z:                      _fullItemZorder + 1
         parentToolInsets:       _toolInsets
         mapControl:             _mapControl
+        mapIsFullScreen:        !videoExpanded
         visible:                !QGroundControl.videoManager.fullScreen
     }
 
@@ -159,7 +160,7 @@ Item {
         anchors.topMargin: ScreenTools.isMobile ? ScreenTools.toolbarHeight / 3 : ScreenTools.toolbarHeight / 2
         anchors.left: parent.left
         z: 1
-        visible: videoControl.pipState.state === videoControl.pipState.pipState
+        visible: false // hidden per user request (tool strip)
         //orientation: Qt.Vertical
         id: __root
 
@@ -208,25 +209,6 @@ Item {
     //     }
     // }
 
-    FlyViewMap {
-        id: mapControl
-        width: parent.width
-        height: parent.height
-        planMasterController: _planController
-        mapName: "FlightMapTopLeft"
-        pipMode: false
-        toolInsets: Qt.rect(0, 0, 0, 0)
-        anchors.top: parent.top
-    }
-
-    FlyViewVideo {
-        id: videoControl
-        width: parent.width
-        height: parent.height
-        anchors.top: parent.top
-        isTheVideoFull: isVideoFull
-    }
-
     // FlyViewInstrumentPanel {
     //     id:                         instrumentPanel
     //     width:                      ScreenTools.isMobile ? _rightPanelWidth : ScreenTools.defaultFontPixelWidth * 35
@@ -252,27 +234,178 @@ Item {
         visible: videoControl.pipState.state === videoControl.pipState.pipState && multiVehiclePanelSelector.showSingleVehiclePanel
     }
 
-    Rectangle {
-        id: messBut
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.margins: ScreenTools.defaultFontPixelWidth
-        width: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth * 5.5 : ScreenTools.defaultFontPixelWidth * 8
-        height: ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 2.2 : ScreenTools.defaultFontPixelHeight * 2.6
-        color: QGroundControl.settingsManager.appSettings.indoorPalette.rawValue ? "#aa000000" : "#aaffffff"
-        radius: height * 4
-        border.width: 1
-        border.color: "white"
-        Loader {
-            source: "qrc:/toolbar/MessageIndicator.qml"
-            anchors.centerIn: parent
-            z: 999
+    property bool videoExpanded: false
+    property bool isVideoFull: videoExpanded
+
+    RowLayout {
+        anchors.fill: parent
+        spacing: 0
+
+        // Left column (25%)
+        Rectangle {
+            Layout.preferredWidth: parent.width * 0.20
+            Layout.fillHeight: true
+            color: "#1a1a1a"
+
+            ColumnLayout {
+                anchors.fill: parent
+                spacing: ScreenTools.defaultFontPixelWidth / 2
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 389
+                    color: "transparent"
+                    clip: true
+
+                    Loader {
+                        id: fwdHudLoader
+                        anchors.fill: parent
+                        anchors.margins: 2
+                        source: "qrc:/qml/QGroundControl/FlightDisplay/FWDAttitudeHUD.qml"
+                        transform: Scale {
+                            origin.x: 0
+                            origin.y: 0
+                            xScale: fwdHudLoader.width / 359
+                            yScale: 1
+                        }
+                    }
+
+                    // Border overlay (drawn on top so it stays visible)
+                    Rectangle {
+                        anchors.fill: parent
+                        color: "transparent"
+                        border.color: "white"
+                        border.width: 1
+                        radius: 2
+                        z: 1
+                    }
+                }
+
+                QuickParamsGrid {
+                    id: quickParamsPanelLeft
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    visible: _activeVehicle !== null
+                }
+
+                Item {
+                    id: leftStrip
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 14
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: "transparent"
+                        border.color: "white"
+                        border.width: 1
+                        radius: 2
+                    }
+                }
+            }
         }
+
+        // Right area (75%)
+        Item {
+            id: rightArea
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+        }
+    }
+
+    FlyViewMap {
+        id: mapControl
+        planMasterController: _planController
+        mapName: "FlightMapTopLeft"
+        pipMode: false
+        toolInsets: Qt.rect(0, 0, 0, 0)
+    }
+
+    FlyViewVideo {
+        id: videoControl
+        isTheVideoFull: isVideoFull
+    }
+
+    states: [
+        State {
+            name: "normal"
+            when: !videoExpanded
+            ParentChange { target: mapControl; parent: rightArea }
+            ParentChange { target: videoControl; parent: leftStrip }
+            StateChangeScript {
+                script: {
+                    mapControl.anchors.fill = rightArea
+                    videoControl.anchors.fill = leftStrip
+                }
+            }
+        },
+        State {
+            name: "expanded"
+            when: videoExpanded
+            ParentChange { target: videoControl; parent: rightArea }
+            ParentChange { target: mapControl; parent: leftStrip }
+            StateChangeScript {
+                script: {
+                    videoControl.anchors.fill = rightArea
+                    mapControl.anchors.fill = leftStrip
+                }
+            }
+        }
+    ]
+
+    // Collapse button when expanded
+    Rectangle {
+        visible: videoExpanded
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.margins: ScreenTools.defaultFontPixelWidth
+        width: ScreenTools.defaultFontPixelWidth * 8
+        height: ScreenTools.defaultFontPixelHeight * 2
+        color: "#aa000000"
+        radius: 4
+        border.color: "white"
+        border.width: 1
+        z: 999
+
+        QGCLabel {
+            anchors.centerIn: parent
+            text: qsTr("Collapse")
+            color: "white"
+            font.bold: true
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: videoExpanded = false
+        }
+    }
+
+    // Strip click to expand
+    MouseArea {
+        x: leftStrip.x
+        y: leftStrip.y
+        width: leftStrip.width
+        height: leftStrip.height
+        z: 2
+        onClicked: videoExpanded = !videoExpanded
+    }
+
+    // keep _pipOverlay harmless
+    QGCPipOverlay {
+        id: _pipOverlay
+        visible: false
+        item1: null
+        item2: null
+        anchors.margins: _toolsMargin
+        item1IsFullSettingsKey: "MainFlyWindowIsMap"
+        fullZOrder: _fullItemZorder
+        pipZOrder: _pipItemZorder
+        x: _toolsMargin
+        y: parent.height - height - _toolsMargin
     }
 
     Rectangle {
         id: ssBut
-        anchors.bottom: messBut.top
+        anchors.bottom: parent.bottom
         anchors.right: parent.right
         anchors.margins: ScreenTools.defaultFontPixelWidth
         width: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth * 5.5 : ScreenTools.defaultFontPixelWidth * 8
@@ -298,6 +431,7 @@ Item {
         }
     }
 
+    /*
     Rectangle {
         id: botRect1
         anchors.top: parent.top
@@ -318,6 +452,7 @@ Item {
             Layout.fillHeight: true
         }
     }
+    */
 
     QGCButton {
         id:                 disconnectButton
@@ -416,33 +551,4 @@ Item {
         guidedValueSlider:          _guidedValueSlider
     }
 
-    QGCPipOverlay {
-        id:                     _pipOverlay
-        //anchors.left:           parent.left
-        //anchors.bottom: videoControl.pipState.state === videoControl.pipState.pipState ? hideParam.top : parent.bottom
-        //anchors.bottom: parent.bottom
-        //anchors.right:          parent.right
-        //anchors.verticalCenter: parent.verticalCenter
-        anchors.margins:        _toolsMargin
-        //anchors.rightMargin: 10
-        item1IsFullSettingsKey: "MainFlyWindowIsMap"
-        item1:                  mapControl
-        item2:                  QGroundControl.videoManager.hasVideo ? videoControl : null
-        fullZOrder:             _fullItemZorder
-        pipZOrder:              _pipItemZorder
-        x: _toolsMargin
-        y: /*videoControl.pipState.state === videoControl.pipState.pipState
-               ? hideParam.y - height - _toolsMargin
-               :*/ parent.height - height - _toolsMargin
-        //visible: false
-        //onVideoClose: photoVideoControl.visible = false
-        //onVideoOpen: photoVideoControl.visible = true
-
-        DragHandler {
-            target: _pipOverlay
-            grabPermissions: PointerHandler.CanTakeOverFromItems
-        }
-    }
-
-    property bool isVideoFull: _pipOverlay._fullItem === videoControl
 }

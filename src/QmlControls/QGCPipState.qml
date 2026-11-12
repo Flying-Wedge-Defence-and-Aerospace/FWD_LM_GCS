@@ -31,6 +31,7 @@ Item {
     states: [
         State {
             name: pipState
+            when: pipOverlay !== null
 
             AnchorChanges {
                 target:         _clientControl
@@ -47,6 +48,7 @@ Item {
         },
         State {
             name: fullState
+            when: pipOverlay !== null
 
             AnchorChanges {
                 target:         _clientControl
@@ -63,6 +65,7 @@ Item {
         },
         State {
             name: windowState
+            when: pipOverlay !== null
 
             AnchorChanges {
                 target:         _root.parent
@@ -86,6 +89,7 @@ Item {
         },
         State {
             name: windowClosingState
+            when: pipOverlay !== null
 
             ParentChange {
                 target: _root.parent

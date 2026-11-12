@@ -59,7 +59,9 @@ QGCPopupDialog {
                 onActivated: {
                     instrumentValueData.setFact(currentText, "")
                     instrumentValueData.icon = ""
-                    instrumentValueData.text = instrumentValueData.fact.shortDescription
+                    instrumentValueData.text = instrumentValueData.fact.shortDescription.length > 0
+                                              ? instrumentValueData.fact.shortDescription
+                                              : instrumentValueData.fact.name
                 }
                 Connections {
                     target: instrumentValueData
@@ -76,7 +78,9 @@ QGCPopupDialog {
                 onActivated: {
                     instrumentValueData.setFact(instrumentValueData.factGroupName, currentText)
                     instrumentValueData.icon = ""
-                    instrumentValueData.text = instrumentValueData.fact.shortDescription
+                    instrumentValueData.text = instrumentValueData.fact.shortDescription.length > 0
+                                              ? instrumentValueData.fact.shortDescription
+                                              : instrumentValueData.fact.name
                 }
                 Connections {
                     target: instrumentValueData

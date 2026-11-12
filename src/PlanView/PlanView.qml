@@ -474,7 +474,8 @@ Item {
                     vehicle:        object
                     coordinate:     object.coordinate
                     map:            editorMap
-                    size:           ScreenTools.defaultFontPixelHeight * 3
+                    size:           ScreenTools.defaultFontPixelHeight * 4
+                    iconSource:     "/qmlimages/vehicleFixedWing.svg"
                     z:              QGroundControl.zOrderMapItems - 1
                 }
             }

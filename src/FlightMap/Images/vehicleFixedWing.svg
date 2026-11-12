@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FWD fixed-wing vehicle marker: Predator-style UAV.
+     Long straight wings, slender fuselage, V-tail. Nose points north. -->
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg"
+     viewBox="-10 -10 320 320"
+     width="320" height="320">
+    <title>FWD Predator-Style UAV</title>
+    <g stroke="#700000" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+        <!-- Long straight wings -->
+        <path fill="#ffffff" d="M160,108 L292,132 L292,146 L160,146 Z"/>
+        <path fill="#ffffff" d="M140,108 L8,132 L8,146 L140,146 Z"/>
+
+        <!-- Slender fuselage -->
+        <path fill="#ffffff" d="M150,15 L158,35 L160,110 L160,250
+            L156,280 L150,292 L144,280 L140,250 L140,110 L142,35 Z"/>
+
+        <!-- V-tail -->
+        <path fill="#ffffff" d="M156,248 L196,280 L196,290 L156,282 Z"/>
+        <path fill="#ffffff" d="M144,248 L104,280 L104,290 L144,282 Z"/>
+
+        <!-- Maroon wingtip caps -->
+        <path fill="#700000" stroke="none" d="M284,130 L292,132 L292,146 L284,146 Z"/>
+        <path fill="#700000" stroke="none" d="M16,130 L8,132 L8,146 L16,146 Z"/>
+
+        <!-- Maroon V-tail tips -->
+        <path fill="#700000" stroke="none" d="M190,276 L196,280 L196,290 L190,286 Z"/>
+        <path fill="#700000" stroke="none" d="M110,276 L104,280 L104,290 L110,286 Z"/>
+
+        <!-- Nose sensor / canopy -->
+        <ellipse cx="150" cy="48" rx="5" ry="12" fill="#700000" stroke="none"/>
+    </g>
+</svg>

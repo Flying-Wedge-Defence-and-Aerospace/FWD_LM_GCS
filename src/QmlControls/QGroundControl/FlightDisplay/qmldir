@@ -44,3 +44,5 @@ SafetyParameters                1.0 SafetyParameters.qml
 FactDisplayItem                 1.0 FactDisplayItem.qml
 GeoFenceEnable                  1.0 GeoFenceEnable.qml
 VideoControl                    1.0 VideoControl.qml
+QuickValuesBar                  1.0 QuickValuesBar.qml
+QuickParamsGrid                 1.0 QuickParamsGrid.qml

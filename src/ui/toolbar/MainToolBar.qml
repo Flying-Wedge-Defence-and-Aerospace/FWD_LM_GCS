@@ -32,62 +32,32 @@ import QGroundControl.Vehicle       1.0
 
 Rectangle {
     id: _root
-    color: "#700000"
+    color: Qt.rgba(0.29, 0.0, 0.0, 0.88)
+
+    // Subtle glass sheen over the smoked-maroon background.
+    Rectangle {
+        anchors.fill: parent
+        gradient: Gradient {
+            GradientStop { position: 0.0;  color: Qt.rgba(1, 1, 1, 0.10) }
+            GradientStop { position: 0.35; color: Qt.rgba(1, 1, 1, 0.03) }
+            GradientStop { position: 1.0;  color: Qt.rgba(0, 0, 0, 0.12) }
+        }
+    }
+
+    // Black accent line along the bottom edge.
+    Rectangle {
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        anchors.bottom: parent.bottom
+        height: 2
+        color: "#0d0d0d"
+    }
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool openProfile: false
 
-    // Only show these flight modes. Matching ignores case, spaces and
-    // punctuation so ArduPilot's own names match, e.g. "QHover" -> "qhover"
-    // matches "q-hover", and "FBWA" matches "fbw a".
-    property var _filteredFlightModes: _calcFilteredModes()
-    property var _allowedModes: ["fbw a","stabilize","rtl","auto","guided","q-stabilize","q-hover","q-loiter","q-land","q-rtl"]
-
-    // QGC's own fallback list (used only if the vehicle does not answer
-    // AVAILABLE_MODES) spells the Q modes out in full. This maps those to
-    // the canonical names above. It only affects matching - the label shown
-    // is always whatever the vehicle/plugin reported.
-    property var _modeAliases: {
-        "quadplanestabilize": "q-stabilize",
-        "quadplanehover":     "q-hover",
-        "quadplaneloiter":    "q-loiter",
-        "quadplaneland":      "q-land",
-        "quadplanertl":       "q-rtl"
-    }
-
-    function _normalizeModeName(mode) {
-        return mode.toLowerCase().replace(/[^a-z0-9]/g, "")
-    }
-
-    function _canonicalModeName(mode) {
-        var normalized = _normalizeModeName(mode)
-        if (_modeAliases[normalized] !== undefined) {
-            return _normalizeModeName(_modeAliases[normalized])
-        }
-        return normalized
-    }
-
-    function _isModeAllowed(mode) {
-        var canonical = _canonicalModeName(mode)
-        for (var i = 0; i < _allowedModes.length; i++) {
-            if (_normalizeModeName(_allowedModes[i]) === canonical) {
-                return true
-            }
-        }
-        return false
-    }
-
-    function _calcFilteredModes() {
-        if (!_activeVehicle) return []
-        var modes = _activeVehicle.flightModes
-        //console.log("FWDGCS flightModes from vehicle:", JSON.stringify(modes))
-        return modes.filter(function(m) { return _isModeAllowed(m) })
-    }
-    on_ActiveVehicleChanged: _filteredFlightModes = _calcFilteredModes()
-    Connections {
-        target: _activeVehicle
-        onFlightModesChanged: _filteredFlightModes = _calcFilteredModes()
-    }
+    // Show every flight mode the vehicle reports as supported.
+    property var _flightModes: _activeVehicle ? _activeVehicle.flightModes : []
 
     signal logOutRequested
 
@@ -119,7 +89,7 @@ Rectangle {
                     spacing: ScreenTools.defaultFontPixelWidth / 2
 
                     Repeater {
-                        model: _filteredFlightModes
+                        model: _flightModes
 
                         QGCButton {
                             text: modelData
@@ -363,21 +333,36 @@ Rectangle {
 
                         Rectangle {
                             id: mainStatusRect
-                            color: "gray" // or dynamic color
+                            color: "#0d0d0d"
                             radius: 15
+                            border.width: 1
+                            border.color: Qt.rgba(1, 1, 1, 0.18)
                             anchors.centerIn: parent
-                            width: modeLabel.contentWidth + 20
-                            height: ScreenTools.isMobible ? modeLabel.contentHeight + 20 : modeLabel.contentHeight + 15
+                            width: modeContent.implicitWidth + 20
+                            height: modeContent.implicitHeight + (ScreenTools.isMobile ? 20 : 15)
 
-                            QGCLabel {
-                                id: modeLabel
+                            RowLayout {
+                                id: modeContent
                                 anchors.centerIn: parent
-                                text: _activeVehicle ? _activeVehicle.flightMode : qsTr("N/A")
-                                color: "white"
-                                font.pointSize: ScreenTools.isMobile ? 8 : 11
+                                spacing: 4
 
-                                ToolTip.visible: flightMode.containsMouse
-                                ToolTip.text: "Mode"
+                                QGCLabel {
+                                    id: modeLabel
+                                    text: _activeVehicle ? _activeVehicle.flightMode : qsTr("N/A")
+                                    color: "white"
+                                    font.pointSize: ScreenTools.isMobile ? 8 : 11
+                                    Layout.alignment: Qt.AlignVCenter
+
+                                    ToolTip.visible: flightMode.containsMouse
+                                    ToolTip.text: "Mode"
+                                }
+
+                                QGCLabel {
+                                    text: "\u25BE"
+                                    color: "white"
+                                    font.pointSize: modeLabel.font.pointSize
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
                             }
 
                             MouseArea {
@@ -393,24 +378,22 @@ Rectangle {
                         }
                     }
 
-                    // Rectangle {
-                    //     Layout.preferredHeight: parent.height
-                    //     width: 1
-                    //     opacity: 0.5
-                    //     color: "white"
-                    // }
+                    Rectangle {
+                        Layout.preferredHeight: parent.height
+                        width: 1
+                        opacity: 0.5
+                        color: "white"
+                    }
 
-                    // Loader {
-                    //     id: messageIndicatorLoader
-                    //     //Layout.leftMargin: 12
-                    //     Layout.fillHeight: true
-                    //     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    //     Layout.preferredWidth: item ? item.implicitWidth : 0
-                    //     Layout.preferredHeight: item ? item.implicitHeight : 0
-                    //     //Layout.preferredWidth: ScreenTools.isMobile ? 120 : 65
-                    //     source: "qrc:/toolbar/MessageIndicator.qml"
-                    //     //visible: item && item.showIndicator
-                    // }
+                    Loader {
+                        id: messageIndicatorLoader
+                        Layout.fillHeight: true
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        Layout.preferredWidth: item ? item.implicitWidth : 0
+                        Layout.preferredHeight: item ? item.implicitHeight : 0
+                        source: "qrc:/toolbar/MessageIndicator.qml"
+                        visible: !planView.visible
+                    }
 
 
                     Rectangle {

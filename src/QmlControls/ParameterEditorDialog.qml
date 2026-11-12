@@ -45,27 +45,40 @@ QGCPopupDialog {
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     onAccepted: {
-        if (bitmaskColumn.visible && !manualEntry.checked) {
-            fact.value = bitmaskValue();
-            fact.valueChanged(fact.value)
-            valueChanged()
-        } else if (factCombo.visible && !manualEntry.checked) {
-            fact.enumIndex = factCombo.currentIndex
-            valueChanged()
-        } else {
-            var errorString = fact.validate(valueField.text, forceSave.checked)
-            if (errorString === "") {
-                fact.value = valueField.text
-                fact.valueChanged(fact.value)
-                valueChanged()
-            } else {
-                validationError.text = errorString
-                if (_allowForceSave) {
-                    forceSave.visible = true
+        mainWindow.showMessageDialog(qsTr("Confirm Save"),
+            qsTr("Apply the new value to parameter '%1'?").arg(fact.name),
+            StandardButton.Cancel | StandardButton.Save,
+            function(button) {
+                if (button !== StandardButton.Save) {
+                    root.close()
+                    return
                 }
-                preventClose = true
-            }
-        }
+                if (bitmaskColumn.visible && !manualEntry.checked) {
+                    fact.value = bitmaskValue()
+                    fact.valueChanged(fact.value)
+                    valueChanged()
+                    root.close()
+                } else if (factCombo.visible && !manualEntry.checked) {
+                    fact.enumIndex = factCombo.currentIndex
+                    valueChanged()
+                    root.close()
+                } else {
+                    var errorString = fact.validate(valueField.text, forceSave.checked)
+                    if (errorString === "") {
+                        fact.value = valueField.text
+                        fact.valueChanged(fact.value)
+                        valueChanged()
+                        root.close()
+                    } else {
+                        validationError.text = errorString
+                        if (_allowForceSave) {
+                            forceSave.visible = true
+                        }
+                        preventClose = true
+                    }
+                }
+            })
+        preventClose = true
     }
 
     function reject() {

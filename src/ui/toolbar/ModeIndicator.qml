@@ -30,18 +30,8 @@ QGCComboBox {
     property bool showIndicator: true
 
     property var _activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
-    // Only show specific flight modes (case-insensitive matching)
-    property var _flightModes: _calcFilteredModes()
-    property var _allowedModes: ["stabilize","stabilized","loiter","hold","guided","auto","mission","altitude hold","altitude","depth hold","rtl","return","land","surface"]
-    function _calcFilteredModes() {
-        if (!_activeVehicle) return []
-        return _activeVehicle.flightModes.filter(function(m) { return _allowedModes.indexOf(m.toLowerCase()) !== -1 })
-    }
-    on_ActiveVehicleChanged: _flightModes = _calcFilteredModes()
-    Connections {
-        target: _activeVehicle
-        onFlightModesChanged: _flightModes = _calcFilteredModes()
-    }
+    // Show every flight mode the vehicle reports as supported.
+    property var _flightModes: _activeVehicle ? _activeVehicle.flightModes : []
 
     onActivated: {
         _activeVehicle.flightMode = _flightModes[index]

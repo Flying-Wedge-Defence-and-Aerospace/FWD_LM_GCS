@@ -53,7 +53,8 @@ Item {
     readonly property string orbitTitle:                    qsTr("Orbit")
     readonly property string landAbortTitle:                qsTr("Land Abort")
     readonly property string setWaypointTitle:              qsTr("Set Waypoint")
-    readonly property string gotoTitle:                     qsTr("Go To Location")
+    readonly property string gotoTitle:                     qsTr("Fly Here")
+    readonly property string gotoAltitudeTitle:             qsTr("Fly Here at Altitude")
     readonly property string vtolTransitionTitle:           qsTr("VTOL Transition")
     readonly property string roiTitle:                      qsTr("ROI")
     readonly property string setHomeTitle:                  qsTr("Set Home")
@@ -74,6 +75,7 @@ Item {
     readonly property string changeCruiseSpeedMessage:          qsTr("Change the maximum horizontal cruise speed.")
     readonly property string changeAirspeedMessage:             qsTr("Change the equivalent airspeed setpoint")
     readonly property string gotoMessage:                       qsTr("Move the vehicle to the specified location.")
+    readonly property string gotoAltitudeMessage:               qsTr("Move the vehicle to the specified location and change its altitude.")
              property string setWaypointMessage:                qsTr("Adjust current waypoint to %1.").arg(_actionData)
     readonly property string orbitMessage:                      qsTr("Orbit the vehicle around the specified location.")
     readonly property string landAbortMessage:                  qsTr("Abort the landing sequence.")
@@ -111,6 +113,7 @@ Item {
     readonly property int actionChangeSpeed:                25
     readonly property int actionGripper:                    26
     readonly property int actionSetHome:                    27
+    readonly property int actionGotoAltitude:               28
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property bool   _useChecklist:              QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
@@ -209,7 +212,7 @@ Item {
                 guidedValueSlider.setMaxVal(QGroundControl.unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.maximumHorizontalSpeedMultirotor()).toFixed(1))
                 guidedValueSlider.setValue(QGroundControl.unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.maximumHorizontalSpeedMultirotor()/2).toFixed(1))
             }
-        } else if (actionCode === actionChangeAlt || actionCode === actionOrbit || actionCode === actionGoto || actionCode === actionPause) {
+        } else if (actionCode === actionChangeAlt || actionCode === actionOrbit || actionCode === actionGoto || actionCode === actionGotoAltitude || actionCode === actionPause) {
             guidedValueSlider.setDisplayText("New Alt(rel)")
             guidedValueSlider.configureAsRelativeAltSliderExp()
         }
@@ -464,6 +467,12 @@ Item {
             confirmDialog.message = gotoMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showGotoLocation })
             break;
+        case actionGotoAltitude:
+            confirmDialog.title = gotoAltitudeTitle
+            confirmDialog.message = gotoAltitudeMessage
+            confirmDialog.hideTrigger = Qt.binding(function() { return !showGotoLocation })
+            guidedValueSlider.visible = true
+            break;
         case actionSetWaypoint:
             confirmDialog.title = setWaypointTitle
             confirmDialog.message = setWaypointMessage
@@ -577,6 +586,10 @@ Item {
             break
         case actionGoto:
             _activeVehicle.guidedModeGotoLocation(actionData)
+            break
+        case actionGotoAltitude:
+            _activeVehicle.guidedModeGotoLocation(actionData)
+            _activeVehicle.guidedModeChangeAltitude(sliderOutputValue, false /* pauseVehicle */)
             break
         case actionSetWaypoint:
             _activeVehicle.setCurrentMissionSequence(actionData)
