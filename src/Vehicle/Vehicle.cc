@@ -2840,12 +2840,64 @@ void Vehicle::startMission()
 void Vehicle::sendParameter(const QString& paramName, double value)
 {
     if (!_parameterManager) return;
+    if (!_parameterManager->parameterExists(_defaultComponentId, paramName)) {
+        qCWarning(VehicleLog) << "sendParameter: parameter not found:" << paramName;
+        return;
+    }
     Fact* fact = _parameterManager->getParameter(_defaultComponentId, paramName);
     if (fact) {
         fact->setRawValue(value);
-    } else {
-        qCWarning(VehicleLog) << "sendParameter: parameter not found:" << paramName;
     }
+}
+
+double Vehicle::loiterRadiusMeters(void)
+{
+    if (!_parameterManager) return qQNaN();
+    if (_parameterManager->parameterExists(_defaultComponentId, QStringLiteral("LOITER_RAD"))) {
+        return _parameterManager->getParameter(_defaultComponentId, QStringLiteral("LOITER_RAD"))->rawValue().toDouble();
+    }
+    if (_parameterManager->parameterExists(_defaultComponentId, QStringLiteral("WP_LOITER_RAD"))) {
+        return _parameterManager->getParameter(_defaultComponentId, QStringLiteral("WP_LOITER_RAD"))->rawValue().toDouble();
+    }
+    return qQNaN();
+}
+
+void Vehicle::setLoiterRadiusMeters(double radius)
+{
+    if (!_parameterManager) return;
+
+    // Mission Planner writes the first parameter that exists from this list.
+    QString paramName;
+    if (_parameterManager->parameterExists(_defaultComponentId, QStringLiteral("LOITER_RAD"))) {
+        paramName = QStringLiteral("LOITER_RAD");
+    } else if (_parameterManager->parameterExists(_defaultComponentId, QStringLiteral("WP_LOITER_RAD"))) {
+        paramName = QStringLiteral("WP_LOITER_RAD");
+    } else {
+        qCWarning(VehicleLog) << "setLoiterRadiusMeters: neither LOITER_RAD nor WP_LOITER_RAD found";
+        return;
+    }
+    sendParameter(paramName, radius);
+}
+
+double Vehicle::defaultChangeSpeedMetersSecond(void)
+{
+    if (!_parameterManager) return qQNaN();
+
+    // Match Mission Planner's initialisation order where possible. ArduPilot speeds are stored
+    // in cm/s for these parameters.
+    if (_parameterManager->parameterExists(_defaultComponentId, QStringLiteral("WP_SPEED_MAX"))) {
+        double speed = _parameterManager->getParameter(_defaultComponentId, QStringLiteral("WP_SPEED_MAX"))->rawValue().toDouble() / 100.0;
+        if (speed > 0) return speed;
+    }
+    if (_parameterManager->parameterExists(_defaultComponentId, QStringLiteral("TRIM_ARSPD_CM"))) {
+        double speed = _parameterManager->getParameter(_defaultComponentId, QStringLiteral("TRIM_ARSPD_CM"))->rawValue().toDouble() / 100.0;
+        if (speed > 0) return speed;
+    }
+
+    double speed = _airSpeedFact.rawValue().toDouble();
+    if (!qIsNaN(speed) && speed > 0) return speed;
+
+    return qQNaN();
 }
 
 void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord)
@@ -2872,6 +2924,13 @@ void Vehicle::guidedModeChangeAltitude(double altitudeChange, bool pauseVehicle)
         return;
     }
     _firmwarePlugin->guidedModeChangeAltitude(this, altitudeChange, pauseVehicle);
+}
+
+void Vehicle::guidedModeChangeAltitudeTo(double altitudeRelative)
+{
+    // Mission Planner's Change Alt action is not mode-gated. The firmware plugin decides whether
+    // the command can be handled.
+    _firmwarePlugin->guidedModeChangeAltitudeTo(this, altitudeRelative);
 }
 
 void

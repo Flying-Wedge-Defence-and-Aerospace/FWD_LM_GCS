@@ -134,8 +134,8 @@ Item {
     property bool showStartMission:     _guidedActionsEnabled && _missionAvailable && !_missionActive && !_vehicleFlying && _canStartMission
     property bool showContinueMission:  _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleFlying && (_currentMissionIndex < _missionItemCount - 1)
     property bool showPause:            _guidedActionsEnabled && _vehicleArmed && _activeVehicle.pauseVehicleSupported && _vehicleFlying && !_vehiclePaused && !_fixedWingOnApproach
-    property bool showChangeAlt:        _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
-    property bool showChangeSpeed:      _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive && _speedLimitsAvailable
+    property bool showChangeAlt:        _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed
+    property bool showChangeSpeed:      _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed && _speedLimitsAvailable
     property bool showOrbit:            _guidedActionsEnabled && _vehicleFlying && __orbitSupported && !_missionActive
     property bool showROI:              _guidedActionsEnabled && _vehicleFlying && __roiSupported && !_missionActive
     property bool showLandAbort:        _guidedActionsEnabled && _vehicleFlying && _fixedWingOnApproach
@@ -582,7 +582,9 @@ Item {
             _activeVehicle.emergencyStop()
             break
         case actionChangeAlt:
-            _activeVehicle.guidedModeChangeAltitude(sliderOutputValue, false /* pauseVehicle */)
+            // The slider returns a delta from the current altitude. Mission Planner's Change Alt
+            // action takes an absolute target relative to home.
+            _activeVehicle.guidedModeChangeAltitudeTo(_activeVehicle.altitudeRelative.rawValue + sliderOutputValue)
             break
         case actionGoto:
             _activeVehicle.guidedModeGotoLocation(actionData)

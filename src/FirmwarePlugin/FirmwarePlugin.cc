@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "FirmwarePlugin.h"
+#include "Vehicle.h"
 #include "QGCApplication.h"
 #include "Generic/GenericAutoPilotPlugin.h"
 #include "CameraMetaData.h"
@@ -273,6 +274,16 @@ void FirmwarePlugin::guidedModeChangeAltitude(Vehicle*, double, bool pauseVehicl
     // Not supported by generic vehicle
     Q_UNUSED(pauseVehicle);
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+}
+
+void FirmwarePlugin::guidedModeChangeAltitudeTo(Vehicle* vehicle, double altitudeRelative)
+{
+    // Fall back to the relative-altitude implementation for firmware plugins which do not have
+    // Mission Planner's altitude-only MISSION_ITEM path.
+    if (!vehicle || qIsNaN(altitudeRelative)) return;
+    double currentAltitude = vehicle->altitudeRelative()->rawValue().toDouble();
+    if (qIsNaN(currentAltitude)) return;
+    guidedModeChangeAltitude(vehicle, altitudeRelative - currentAltitude, false /* pauseVehicle */);
 }
 
 void

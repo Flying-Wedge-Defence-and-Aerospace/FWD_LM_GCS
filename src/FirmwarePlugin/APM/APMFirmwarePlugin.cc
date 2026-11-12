@@ -901,6 +901,14 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
     }
 }
 
+void APMFirmwarePlugin::guidedModeChangeAltitudeTo(Vehicle* vehicle, double altitudeRelative)
+{
+    // Mission Planner sends an altitude-only MISSION_ITEM (current=3) rather than switching to
+    // Guided mode. ArduPilot applies it to next_WP_loc, so it works in any navigation mode and
+    // does not force a mode change.
+    vehicle->missionManager()->writeArduPilotAltitudeChangeItem(altitudeRelative);
+}
+
 void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
 {
     _guidedModeTakeoff(vehicle, altitudeRel);
@@ -1166,14 +1174,16 @@ bool APMFirmwarePlugin::fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle)
 
 void APMFirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv)
 {
-
+    // Match Mission Planner's Change Speed action exactly: DO_CHANGE_SPEED with airspeed as
+    // param 1, all remaining parameters zero, and no error popup if the vehicle rejects it.
     vehicle->sendMavCommand(
         vehicle->defaultComponentId(),
         MAV_CMD_DO_CHANGE_SPEED,
-        true,                                 // show error is fails
+        false,                                // show error if fails
         0,                                    // 0: airspeed, 1: groundspeed
         static_cast<float>(airspeed_equiv),   // speed setpoint
-        -1,                                   // throttle, no change
-        0                                     // 0: absolute speed, 1: relative to current
-        );                                    // param 5-7 unused
+        0,                                    // throttle
+        0,                                    // 0: absolute speed, 1: relative to current
+        0, 0, 0                               // param 5-7 unused
+        );
 }

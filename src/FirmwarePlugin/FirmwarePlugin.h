@@ -178,6 +178,10 @@ public:
     ///     @param pauseVehicle true: pause vehicle prior to altitude change
     virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle);
 
+    /// Command vehicle to change to an absolute altitude relative to home
+    ///     @param altitudeRelative Target altitude relative to home in meters
+    virtual void guidedModeChangeAltitudeTo(Vehicle* vehicle, double altitudeRelative);
+
         /// Command vehicle to change groundspeed
     ///     @param groundspeed Groundspeed in m/s
     virtual void guidedModeChangeGroundSpeedMetersSecond(Vehicle* vehicle, double groundspeed);

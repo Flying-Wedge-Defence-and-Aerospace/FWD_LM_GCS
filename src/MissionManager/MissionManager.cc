@@ -56,8 +56,10 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
         missionItem.param2 =            0;
         missionItem.param3 =            0;
         missionItem.param4 =            0;
-        missionItem.x =                 gotoCoord.latitude();
-        missionItem.y =                 gotoCoord.longitude();
+        // Mission Planner sends zero lat/lon for the altitude-only change request. ArduPilot only
+        // uses the altitude from this message.
+        missionItem.x =                 altChangeOnly ? 0.0 : gotoCoord.latitude();
+        missionItem.y =                 altChangeOnly ? 0.0 : gotoCoord.longitude();
         missionItem.z =                 gotoCoord.altitude();
         missionItem.frame =             MAV_FRAME_GLOBAL_RELATIVE_ALT;
         missionItem.current =           altChangeOnly ? 3 : 2;
@@ -73,6 +75,13 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
     }
     _startAckTimeout(AckGuidedItem);
     emit inProgressChanged(true);
+}
+
+void MissionManager::writeArduPilotAltitudeChangeItem(double relativeAltitude)
+{
+    // Match Mission Planner's setNewWPAlt: send a WAYPOINT mission item at seq 0 with
+    // current=3 and zero latitude/longitude. ArduPilot handles this as an altitude-only change.
+    writeArduPilotGuidedMissionItem(QGeoCoordinate(0.0, 0.0, relativeAltitude), true /* altChangeOnly */);
 }
 
 void MissionManager::generateResumeMission(int resumeIndex)

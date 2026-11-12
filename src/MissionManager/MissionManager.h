@@ -32,6 +32,11 @@ public:
     ///     @param altChangeOnly true: only altitude change, false: lat/lon/alt change
     void writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoCoord, bool altChangeOnly);
 
+    /// Changes the target altitude of the current/nav waypoint using Mission Planner's altitude-only
+    /// MISSION_ITEM method (seq 0, current 3, zero lat/lon).
+    ///     @param relativeAltitude Target altitude relative to home in meters
+    void writeArduPilotAltitudeChangeItem(double relativeAltitude);
+
     /// Generates a new mission which starts from the specified index. It will include all the CMD_DO items
     /// from mission start to resumeIndex in the generate mission.
     void generateResumeMission(int resumeIndex);

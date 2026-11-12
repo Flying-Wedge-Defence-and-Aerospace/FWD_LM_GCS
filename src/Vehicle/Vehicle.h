@@ -386,6 +386,10 @@ public:
     ///     @param pauseVehicle true: pause vehicle prior to altitude change
     Q_INVOKABLE void guidedModeChangeAltitude(double altitudeChange, bool pauseVehicle);
 
+    /// Command vehicle to change to an absolute altitude relative to home
+    ///     @param altitudeRelative Target altitude relative to home in meters
+    Q_INVOKABLE void guidedModeChangeAltitudeTo(double altitudeRelative);
+
     /// Command vehicle to change groundspeed
     ///     @param groundspeed Target horizontal groundspeed
     Q_INVOKABLE void guidedModeChangeGroundSpeedMetersSecond(double groundspeed);
@@ -466,6 +470,16 @@ public:
     Q_INVOKABLE void closeVehicle(void) { _vehicleLinkManager->closeVehicle(); }
 
     Q_INVOKABLE void sendParameter(const QString& paramName, double value);
+
+    /// @return Current loiter radius in meters, or NaN if neither LOITER_RAD nor WP_LOITER_RAD exists
+    Q_INVOKABLE double loiterRadiusMeters(void);
+
+    /// Sets LOITER_RAD when present, otherwise WP_LOITER_RAD.
+    ///     @param radius Loiter radius in meters
+    Q_INVOKABLE void setLoiterRadiusMeters(double radius);
+
+    /// @return The best available default cruise speed in m/s for the Change Speed control
+    Q_INVOKABLE double defaultChangeSpeedMetersSecond(void);
 
     /// Trigger camera using MAV_CMD_DO_DIGICAM_CONTROL command
     Q_INVOKABLE void triggerSimpleCamera(void);

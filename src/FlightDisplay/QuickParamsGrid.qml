@@ -39,6 +39,17 @@ Rectangle {
 
     Component.onCompleted: {
         _resetDefaults()
+        _refreshOverrideDefaults()
+    }
+
+    on_ActiveVehicleChanged: _refreshOverrideDefaults()
+    onActiveTabChanged: {
+        if (activeTab === 1) _refreshOverrideDefaults()
+    }
+
+    Connections {
+        target: quickParamsGrid._activeVehicle ? quickParamsGrid._activeVehicle.parameterManager : null
+        onParametersReadyChanged: quickParamsGrid._refreshOverrideDefaults()
     }
 
     function _getFactGroup(grp) {
@@ -260,6 +271,26 @@ Rectangle {
     }
     }
 
+    // ---- In-flight overrides (Mission Planner Actions tab parity) -----------
+    function _refreshOverrideDefaults() {
+        changeAltField.text = "100"
+        if (!_activeVehicle) {
+            changeSpeedField.text = ""
+            loiterRadiusField.text = ""
+            return
+        }
+
+        var speed = _activeVehicle.defaultChangeSpeedMetersSecond()
+        changeSpeedField.text = isNaN(speed)
+                ? ""
+                : QGroundControl.unitsConversion.metersSecondToAppSettingsSpeedUnits(speed).toFixed(1)
+
+        var radius = _activeVehicle.loiterRadiusMeters()
+        loiterRadiusField.text = isNaN(radius)
+                ? ""
+                : QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(radius).toFixed(0)
+    }
+
     // ---- Action tab helpers -------------------------------------------------
     function _actionLabel(index) {
         switch (index) {
@@ -269,11 +300,15 @@ Rectangle {
         case 3: return qsTr("Do Parachute")
         case 4: return qsTr("Scripting On")
         case 5: return qsTr("Scripting Off")
+        case 6: return qsTr("Change Alt")
+        case 7: return qsTr("Change Speed")
+        case 8: return qsTr("Set Loiter Rad")
         }
         return qsTr("Action")
     }
 
     function _actionWarning(index) {
+        var units = QGroundControl.unitsConversion
         switch (index) {
         case 0: return qsTr("The vehicle will reboot and the link will drop briefly.")
         case 1: return qsTr("The vehicle will start the loaded mission.")
@@ -281,6 +316,12 @@ Rectangle {
         case 3: return qsTr("The parachute will be deployed. Use only in an emergency.")
         case 4: return qsTr("Scripting will be enabled on the vehicle.")
         case 5: return qsTr("Scripting will be disabled on the vehicle.")
+        case 6: return qsTr("Change the target altitude to %1 %2 above home. The flight mode will not be changed.")
+                       .arg(changeAltField.text).arg(units.appSettingsVerticalDistanceUnitsString)
+        case 7: return qsTr("Change the target airspeed to %1 %2. The flight mode will not be changed.")
+                       .arg(changeSpeedField.text).arg(units.appSettingsSpeedUnitsString)
+        case 8: return qsTr("Set the loiter radius to %1 %2. Negative values mean counter-clockwise.")
+                       .arg(loiterRadiusField.text).arg(units.appSettingsHorizontalDistanceUnitsString)
         }
         return ""
     }
@@ -294,107 +335,328 @@ Rectangle {
         case 3: _activeVehicle.sendCommand(_activeVehicle.defaultComponentId(), 208, true, 2); break
         case 4: _activeVehicle.sendParameter("SCR_ENABLE", 1); break
         case 5: _activeVehicle.sendParameter("SCR_ENABLE", 0); break
+        case 6: {
+            var alt = QGroundControl.unitsConversion.appSettingsVerticalDistanceUnitsToMeters(Number(changeAltField.text))
+            if (!isNaN(alt)) _activeVehicle.guidedModeChangeAltitudeTo(alt)
+            break
+        }
+        case 7: {
+            var speed = QGroundControl.unitsConversion.appSettingsSpeedUnitsToMetersSecond(Number(changeSpeedField.text))
+            if (!isNaN(speed)) _activeVehicle.guidedModeChangeEquivalentAirspeedMetersSecond(speed)
+            break
+        }
+        case 8: {
+            var radius = QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsToMeters(Number(loiterRadiusField.text))
+            if (!isNaN(radius)) _activeVehicle.setLoiterRadiusMeters(radius)
+            break
+        }
         }
     }
 
-    // Action tab panel (Mission Planner style: dropdown + Do Action button)
-    ColumnLayout {
+    // Action tab panel (Mission Planner style: quick actions + in-flight overrides)
+    Flickable {
+        id: actionFlick
         anchors.top: tabBarContainer.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.margins: ScreenTools.defaultFontPixelWidth / 4
-        spacing: ScreenTools.defaultFontPixelWidth / 2
+        contentWidth: width
+        contentHeight: actionColumn.height
+        clip: true
         visible: activeTab === 1
 
-        ComboBox {
-            id: actionCombo
-            Layout.fillWidth: true
-            model: [
-                qsTr("Preflight Reboot"),
-                qsTr("Mission Start"),
-                qsTr("Loiter Unlimited"),
-                qsTr("Do Parachute"),
-                qsTr("Scripting On"),
-                qsTr("Scripting Off")
-            ]
-            palette.buttonText: "#ffffff"
-            palette.text: "#ffffff"
-            palette.window: "#1a1a1a"
-            palette.highlight: "#555555"
+        ColumnLayout {
+            id: actionColumn
+            width: actionFlick.width
+            spacing: ScreenTools.defaultFontPixelWidth / 2
 
-            delegate: ItemDelegate {
-                width: actionCombo.width
-                text: modelData
-                hoverEnabled: true
-                contentItem: Text {
+            ComboBox {
+                id: actionCombo
+                Layout.fillWidth: true
+                model: [
+                    qsTr("Preflight Reboot"),
+                    qsTr("Mission Start"),
+                    qsTr("Loiter Unlimited"),
+                    qsTr("Do Parachute"),
+                    qsTr("Scripting On"),
+                    qsTr("Scripting Off")
+                ]
+                palette.buttonText: "#ffffff"
+                palette.text: "#ffffff"
+                palette.window: "#1a1a1a"
+                palette.highlight: "#555555"
+
+                delegate: ItemDelegate {
+                    width: actionCombo.width
                     text: modelData
+                    hoverEnabled: true
+                    contentItem: Text {
+                        text: modelData
+                        color: "#ffffff"
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: ScreenTools.defaultFontPixelWidth
+                    }
+                    background: Rectangle {
+                        color: (highlighted || hovered) ? "#333333" : "#1a1a1a"
+                    }
+                }
+
+                background: Rectangle {
+                    color: "#2a2a2a"
+                    border.color: "#555555"
+                    border.width: 1
+                    radius: 4
+                }
+                contentItem: Text {
+                    text: actionCombo.displayText
                     color: "#ffffff"
                     verticalAlignment: Text.AlignVCenter
                     leftPadding: ScreenTools.defaultFontPixelWidth
                 }
-                background: Rectangle {
-                    color: (highlighted || hovered) ? "#333333" : "#1a1a1a"
+                popup: Popup {
+                    width: actionCombo.width
+                    implicitHeight: contentItem.implicitHeight
+                    padding: 1
+                    contentItem: ListView {
+                        clip: true
+                        implicitHeight: contentHeight
+                        model: actionCombo.popup.visible ? actionCombo.delegateModel : null
+                        currentIndex: actionCombo.highlightedIndex
+                        ScrollIndicator.vertical: ScrollIndicator { }
+                    }
+                    background: Rectangle {
+                        color: "#1a1a1a"
+                        border.color: "#555555"
+                        border.width: 1
+                    }
                 }
             }
 
-            background: Rectangle {
-                color: "#2a2a2a"
-                border.color: "#555555"
-                border.width: 1
-                radius: 4
-            }
-            contentItem: Text {
-                text: actionCombo.displayText
-                color: "#ffffff"
-                verticalAlignment: Text.AlignVCenter
-                leftPadding: ScreenTools.defaultFontPixelWidth
-            }
-            popup: Popup {
-                width: actionCombo.width
-                implicitHeight: contentItem.implicitHeight
-                padding: 1
-                contentItem: ListView {
-                    clip: true
-                    implicitHeight: contentHeight
-                    model: actionCombo.popup.visible ? actionCombo.delegateModel : null
-                    currentIndex: actionCombo.highlightedIndex
-                    ScrollIndicator.vertical: ScrollIndicator { }
+            QGCButton {
+                Layout.fillWidth: true
+                height: ScreenTools.defaultFontPixelHeight * 2.5
+                text: qsTr("Do Action")
+                onClicked: {
+                    if (!_activeVehicle) return
+                    if (actionCombo.currentIndex < 0) return
+                    _pendingActionIndex = actionCombo.currentIndex
+                    actionConfirmDialog.open()
                 }
                 background: Rectangle {
-                    color: "#1a1a1a"
+                    color: parent.pressed ? "#3a3a3a" : (parent.hovered ? "#333333" : "#2a2a2a")
                     border.color: "#555555"
                     border.width: 1
+                    radius: 4
+                }
+                contentItem: Text {
+                    text: parent.text
+                    color: "#ffffff"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    font.pointSize: ScreenTools.defaultFontPointSize
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.topMargin: ScreenTools.defaultFontPixelHeight / 4
+                height: 1
+                color: "#555555"
+            }
+
+            QGCLabel {
+                Layout.fillWidth: true
+                text: qsTr("In-flight Overrides")
+                color: "#cccccc"
+                font.bold: true
+                font.pointSize: ScreenTools.defaultFontPointSize
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: ScreenTools.defaultFontPixelWidth / 2
+
+                QGCLabel {
+                    Layout.preferredWidth: actionColumn.width * 0.38
+                    text: qsTr("Altitude (%1)").arg(QGroundControl.unitsConversion.appSettingsVerticalDistanceUnitsString)
+                    color: "#ffffff"
+                    elide: Text.ElideRight
+                    font.pointSize: ScreenTools.defaultFontPointSize * 0.9
+                }
+
+                TextField {
+                    id: changeAltField
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 2
+                    text: "100"
+                    color: "#ffffff"
+                    font.pointSize: ScreenTools.defaultFontPointSize
+                    horizontalAlignment: TextInput.AlignRight
+                    selectByMouse: true
+                    inputMethodHints: Qt.ImhFormattedNumbersOnly
+                    validator: DoubleValidator {
+                        bottom: 0
+                        top: 10000
+                        decimals: 1
+                        notation: DoubleValidator.StandardNotation
+                    }
+                    background: Rectangle {
+                        color: "#2a2a2a"
+                        border.color: "#555555"
+                        border.width: 1
+                        radius: 4
+                    }
+                }
+
+                QGCButton {
+                    Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 8
+                    Layout.preferredHeight: changeAltField.height
+                    text: qsTr("Set")
+                    enabled: _activeVehicle !== null && changeAltField.acceptableInput
+                    onClicked: {
+                        if (!_activeVehicle) return
+                        _pendingActionIndex = 6
+                        actionConfirmDialog.open()
+                    }
+                    background: Rectangle {
+                        color: parent.enabled ? (parent.pressed ? "#800000" : (parent.hovered ? "#4d0000" : "#2a2a2a")) : "#141414"
+                        border.color: parent.enabled ? "#ffffff" : "#555555"
+                        border.width: 1
+                        radius: 4
+                    }
+                    contentItem: Text {
+                        text: parent.text
+                        color: parent.enabled ? "#ffffff" : "#777777"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pointSize: ScreenTools.defaultFontPointSize
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: ScreenTools.defaultFontPixelWidth / 2
+
+                QGCLabel {
+                    Layout.preferredWidth: actionColumn.width * 0.38
+                    text: qsTr("Speed (%1)").arg(QGroundControl.unitsConversion.appSettingsSpeedUnitsString)
+                    color: "#ffffff"
+                    elide: Text.ElideRight
+                    font.pointSize: ScreenTools.defaultFontPointSize * 0.9
+                }
+
+                TextField {
+                    id: changeSpeedField
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 2
+                    color: "#ffffff"
+                    font.pointSize: ScreenTools.defaultFontPointSize
+                    horizontalAlignment: TextInput.AlignRight
+                    selectByMouse: true
+                    inputMethodHints: Qt.ImhFormattedNumbersOnly
+                    validator: DoubleValidator {
+                        bottom: 0
+                        top: 1000
+                        decimals: 1
+                        notation: DoubleValidator.StandardNotation
+                    }
+                    background: Rectangle {
+                        color: "#2a2a2a"
+                        border.color: "#555555"
+                        border.width: 1
+                        radius: 4
+                    }
+                }
+
+                QGCButton {
+                    Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 8
+                    Layout.preferredHeight: changeSpeedField.height
+                    text: qsTr("Set")
+                    enabled: _activeVehicle !== null && changeSpeedField.acceptableInput
+                    onClicked: {
+                        if (!_activeVehicle) return
+                        _pendingActionIndex = 7
+                        actionConfirmDialog.open()
+                    }
+                    background: Rectangle {
+                        color: parent.enabled ? (parent.pressed ? "#800000" : (parent.hovered ? "#4d0000" : "#2a2a2a")) : "#141414"
+                        border.color: parent.enabled ? "#ffffff" : "#555555"
+                        border.width: 1
+                        radius: 4
+                    }
+                    contentItem: Text {
+                        text: parent.text
+                        color: parent.enabled ? "#ffffff" : "#777777"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pointSize: ScreenTools.defaultFontPointSize
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: ScreenTools.defaultFontPixelWidth / 2
+
+                QGCLabel {
+                    Layout.preferredWidth: actionColumn.width * 0.38
+                    text: qsTr("Loiter Rad (%1)").arg(QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString)
+                    color: "#ffffff"
+                    elide: Text.ElideRight
+                    font.pointSize: ScreenTools.defaultFontPointSize * 0.9
+                }
+
+                TextField {
+                    id: loiterRadiusField
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 2
+                    color: "#ffffff"
+                    font.pointSize: ScreenTools.defaultFontPointSize
+                    horizontalAlignment: TextInput.AlignRight
+                    selectByMouse: true
+                    inputMethodHints: Qt.ImhFormattedNumbersOnly
+                    validator: DoubleValidator {
+                        bottom: -10000
+                        top: 10000
+                        decimals: 0
+                        notation: DoubleValidator.StandardNotation
+                    }
+                    background: Rectangle {
+                        color: "#2a2a2a"
+                        border.color: "#555555"
+                        border.width: 1
+                        radius: 4
+                    }
+                }
+
+                QGCButton {
+                    Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 8
+                    Layout.preferredHeight: loiterRadiusField.height
+                    text: qsTr("Set")
+                    enabled: _activeVehicle !== null && loiterRadiusField.acceptableInput
+                    onClicked: {
+                        if (!_activeVehicle) return
+                        _pendingActionIndex = 8
+                        actionConfirmDialog.open()
+                    }
+                    background: Rectangle {
+                        color: parent.enabled ? (parent.pressed ? "#800000" : (parent.hovered ? "#4d0000" : "#2a2a2a")) : "#141414"
+                        border.color: parent.enabled ? "#ffffff" : "#555555"
+                        border.width: 1
+                        radius: 4
+                    }
+                    contentItem: Text {
+                        text: parent.text
+                        color: parent.enabled ? "#ffffff" : "#777777"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pointSize: ScreenTools.defaultFontPointSize
+                    }
                 }
             }
         }
-
-        QGCButton {
-            Layout.fillWidth: true
-            height: ScreenTools.defaultFontPixelHeight * 2.5
-            text: qsTr("Do Action")
-            onClicked: {
-                if (!_activeVehicle) return
-                if (actionCombo.currentIndex < 0) return
-                _pendingActionIndex = actionCombo.currentIndex
-                actionConfirmDialog.open()
-            }
-            background: Rectangle {
-                color: parent.pressed ? "#3a3a3a" : (parent.hovered ? "#333333" : "#2a2a2a")
-                border.color: "#555555"
-                border.width: 1
-                radius: 4
-            }
-            contentItem: Text {
-                text: parent.text
-                color: "#ffffff"
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                font.pointSize: ScreenTools.defaultFontPointSize
-            }
-        }
-
-        Item { Layout.fillHeight: true }
     }
 
     // Generic action confirmation dialog
