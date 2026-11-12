@@ -50,7 +50,7 @@ public:
     /// IMPORTANT NOTE: PlanManager will take control of the MissionItem objects with the missionItems list. It will free them when done.
     ///     @param missionItems Items to send to vehicle
     ///     Signals sendComplete when done
-    void writeMissionItems(const QList<MissionItem*>& missionItems);
+    virtual void writeMissionItems(const QList<MissionItem*>& missionItems);
 
     /// Removes all mission items from vehicle
     ///     Signals removeAllComplete when done

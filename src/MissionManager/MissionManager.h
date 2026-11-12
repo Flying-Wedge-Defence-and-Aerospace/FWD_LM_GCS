@@ -37,12 +37,17 @@ public:
     ///     @param relativeAltitude Target altitude relative to home in meters
     void writeArduPilotAltitudeChangeItem(double relativeAltitude);
 
+    /// Writes mission items and, when the vehicle is already flying an AUTO mission, re-applies the
+    /// current waypoint afterwards so edited mission details take effect without a mode change.
+    void writeMissionItems(const QList<MissionItem*>& missionItems) override;
+
     /// Generates a new mission which starts from the specified index. It will include all the CMD_DO items
     /// from mission start to resumeIndex in the generate mission.
     void generateResumeMission(int resumeIndex);
 
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
+    void _applyUpdatedMission(bool error);
 
 private:
     void _handleHighLatency(const mavlink_message_t& message);
@@ -52,4 +57,5 @@ private:
     void _handleHeartbeat(const mavlink_message_t& message);
 
     int _cachedLastCurrentIndex;
+    int _autoApplyMissionIndex = -1;
 };

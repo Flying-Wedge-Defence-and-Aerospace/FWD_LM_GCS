@@ -20,8 +20,10 @@ QGC_LOGGING_CATEGORY(MissionManagerLog, "MissionManagerLog")
 MissionManager::MissionManager(Vehicle* vehicle)
     : PlanManager               (vehicle, MAV_MISSION_TYPE_MISSION)
     , _cachedLastCurrentIndex   (-1)
+    , _autoApplyMissionIndex    (-1)
 {
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &MissionManager::_mavlinkMessageReceived);
+    connect(this, &PlanManager::sendComplete, this, &MissionManager::_applyUpdatedMission);
 }
 
 MissionManager::~MissionManager()
@@ -82,6 +84,43 @@ void MissionManager::writeArduPilotAltitudeChangeItem(double relativeAltitude)
     // Match Mission Planner's setNewWPAlt: send a WAYPOINT mission item at seq 0 with
     // current=3 and zero latitude/longitude. ArduPilot handles this as an altitude-only change.
     writeArduPilotGuidedMissionItem(QGeoCoordinate(0.0, 0.0, relativeAltitude), true /* altChangeOnly */);
+}
+
+void MissionManager::writeMissionItems(const QList<MissionItem*>& missionItems)
+{
+    // Capture the active waypoint before the write resets it. After a successful upload we can
+    // ask ArduPilot to re-apply that waypoint so edited mission data takes effect in AUTO
+    // without the operator having to cycle flight modes.
+    _autoApplyMissionIndex = -1;
+    if (_vehicle && _vehicle->armed() && _vehicle->apmFirmware()
+            && _vehicle->flightMode().compare(QStringLiteral("Auto"), Qt::CaseInsensitive) == 0) {
+        _autoApplyMissionIndex = _currentMissionIndex;
+    }
+
+    PlanManager::writeMissionItems(missionItems);
+}
+
+void MissionManager::_applyUpdatedMission(bool error)
+{
+    const int seq = _autoApplyMissionIndex;
+    _autoApplyMissionIndex = -1;
+
+    if (error || seq < 0 || !_vehicle) {
+        return;
+    }
+    if (!_vehicle->armed() || !_vehicle->apmFirmware()
+            || _vehicle->flightMode().compare(QStringLiteral("Auto"), Qt::CaseInsensitive) != 0) {
+        return;
+    }
+    if (seq >= _missionItems.count()) {
+        return;
+    }
+
+    // DO_SET_MISSION_CURRENT causes ArduPilot to reload the current navigation command from the
+    // freshly uploaded mission, applying waypoint changes while remaining in AUTO.
+    _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_SET_MISSION_CURRENT,
+                             false /* showError */, static_cast<float>(seq), 0.0f, 0.0f,
+                             0.0f, 0.0f, 0.0f, 0.0f);
 }
 
 void MissionManager::generateResumeMission(int resumeIndex)
