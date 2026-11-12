@@ -285,7 +285,7 @@ Item {
                     id: quickParamsPanelLeft
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    visible: _activeVehicle !== null
+                    visible: true
                 }
 
                 Item {

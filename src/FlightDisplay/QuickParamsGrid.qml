@@ -63,7 +63,7 @@ Rectangle {
     }
 
     function _getVal(grp, name) {
-        if (!_activeVehicle) return "—"
+        if (!_activeVehicle) return "No vehicle"
         if (grp === "empty") return "—"
         try {
             var g = _getFactGroup(grp)
@@ -438,7 +438,10 @@ Rectangle {
                 height: ScreenTools.defaultFontPixelHeight * 2.5
                 text: qsTr("Do Action")
                 onClicked: {
-                    if (!_activeVehicle) return
+                    if (!_activeVehicle) {
+                        noVehicleDialog.open()
+                        return
+                    }
                     if (actionCombo.currentIndex < 0) return
                     _pendingActionIndex = actionCombo.currentIndex
                     actionConfirmDialog.open()
@@ -513,9 +516,12 @@ Rectangle {
                     Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 8
                     Layout.preferredHeight: changeAltField.height
                     text: qsTr("Set")
-                    enabled: _activeVehicle !== null && changeAltField.acceptableInput
+                    enabled: changeAltField.acceptableInput
                     onClicked: {
-                        if (!_activeVehicle) return
+                        if (!_activeVehicle) {
+                            noVehicleDialog.open()
+                            return
+                        }
                         _pendingActionIndex = 6
                         actionConfirmDialog.open()
                     }
@@ -574,9 +580,12 @@ Rectangle {
                     Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 8
                     Layout.preferredHeight: changeSpeedField.height
                     text: qsTr("Set")
-                    enabled: _activeVehicle !== null && changeSpeedField.acceptableInput
+                    enabled: changeSpeedField.acceptableInput
                     onClicked: {
-                        if (!_activeVehicle) return
+                        if (!_activeVehicle) {
+                            noVehicleDialog.open()
+                            return
+                        }
                         _pendingActionIndex = 7
                         actionConfirmDialog.open()
                     }
@@ -635,9 +644,12 @@ Rectangle {
                     Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 8
                     Layout.preferredHeight: loiterRadiusField.height
                     text: qsTr("Set")
-                    enabled: _activeVehicle !== null && loiterRadiusField.acceptableInput
+                    enabled: loiterRadiusField.acceptableInput
                     onClicked: {
-                        if (!_activeVehicle) return
+                        if (!_activeVehicle) {
+                            noVehicleDialog.open()
+                            return
+                        }
                         _pendingActionIndex = 8
                         actionConfirmDialog.open()
                     }
@@ -820,6 +832,70 @@ Rectangle {
                         verticalAlignment: Text.AlignVCenter
                         font.pointSize: ScreenTools.defaultFontPointSize
                     }
+                }
+            }
+        }
+    }
+
+    // Dialog shown when an Action-tab control is used without a connected vehicle
+    Dialog {
+        id: noVehicleDialog
+        title: qsTr("Connect Vehicle")
+        modal: true
+        width: ScreenTools.defaultFontPixelWidth * 30
+        height: ScreenTools.defaultFontPixelHeight * 10
+        parent: Overlay.overlay
+        x: parent ? Math.round((parent.width - width) / 2) : 0
+        y: parent ? Math.round((parent.height - height) / 2) : 0
+
+        background: Rectangle {
+            color: "#0d0d0d"
+            border.color: "#ffffff"
+            border.width: 1
+        }
+
+        header: Label {
+            text: noVehicleDialog.title
+            color: "#ffffff"
+            font.bold: true
+            font.pointSize: ScreenTools.defaultFontPointSize
+            padding: ScreenTools.defaultFontPixelHeight * 0.5
+
+            background: Rectangle {
+                color: "#800000"
+            }
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: ScreenTools.defaultFontPixelWidth
+            spacing: ScreenTools.defaultFontPixelHeight
+
+            QGCLabel {
+                Layout.fillWidth: true
+                text: qsTr("Connect a vehicle before using Quick or Action tab controls.")
+                color: "#e6e6e6"
+                wrapMode: Text.WordWrap
+            }
+
+            Item { Layout.fillHeight: true }
+
+            QGCButton {
+                Layout.fillWidth: true
+                text: qsTr("OK")
+                onClicked: noVehicleDialog.close()
+                background: Rectangle {
+                    color: parent.pressed ? "#800000" : (parent.hovered ? "#4d0000" : "#2a2a2a")
+                    border.color: "#ffffff"
+                    border.width: 1
+                    radius: 4
+                }
+                contentItem: Text {
+                    text: parent.text
+                    color: "#ffffff"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    font.pointSize: ScreenTools.defaultFontPointSize
                 }
             }
         }
