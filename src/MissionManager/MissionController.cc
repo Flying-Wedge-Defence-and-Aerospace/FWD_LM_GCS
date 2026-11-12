@@ -2670,7 +2670,11 @@ MissionController::SendToVehiclePreCheckState MissionController::sendToVehiclePr
     if (_managerVehicle->isOfflineEditingVehicle()) {
         return SendToVehiclePreCheckStateNoActiveVehicle;
     }
-    if (_managerVehicle->armed() && _managerVehicle->flightMode() == _managerVehicle->missionFlightMode()) {
+    // FWD LM allows an updated mission to be uploaded while an ArduPilot mission is already
+    // running. The MissionManager re-applies the active waypoint afterwards, so the operator
+    // does not have to pause or cycle AUTO manually.
+    if (_managerVehicle->armed() && _managerVehicle->flightMode() == _managerVehicle->missionFlightMode()
+            && !_managerVehicle->apmFirmware()) {
         return SendToVehiclePreCheckStateActiveMission;
     }
     if (_controllerVehicle->firmwareType() != _managerVehicle->firmwareType() || QGCMAVLink::vehicleClass(_controllerVehicle->vehicleType()) != QGCMAVLink::vehicleClass(_managerVehicle->vehicleType())) {
