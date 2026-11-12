@@ -63,7 +63,7 @@ Rectangle {
     }
 
     function _getVal(grp, name) {
-        if (!_activeVehicle) return "No vehicle"
+        if (!_activeVehicle) return "--.--"
         if (grp === "empty") return "—"
         try {
             var g = _getFactGroup(grp)
