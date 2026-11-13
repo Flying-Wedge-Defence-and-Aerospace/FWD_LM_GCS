@@ -253,8 +253,8 @@ Item {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: fwdHudLoader.width * 389 / 359
-                    Layout.minimumHeight: fwdHudLoader.width * 389 / 359
+                    Layout.preferredHeight: Math.min(fwdHudLoader.width * 389 / 359, ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 10 : 22))
+                    Layout.minimumHeight: Math.min(fwdHudLoader.width * 389 / 359, ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 10 : 22))
                     color: "transparent"
                     clip: true
 
@@ -286,15 +286,15 @@ Item {
                     id: quickParamsPanelLeft
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    Layout.minimumHeight: ScreenTools.defaultFontPixelHeight * 10
+                    Layout.minimumHeight: ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 6 : 10)
                     visible: true
                 }
 
                 Item {
                     id: leftStrip
                     Layout.fillWidth: true
-                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 12 : 14)
-                    Layout.minimumHeight: ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 10 : 10)
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 10 : 14)
+                    Layout.minimumHeight: ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 8 : 10)
 
                     Rectangle {
                         anchors.fill: parent
