@@ -293,7 +293,8 @@ Item {
                 Item {
                     id: leftStrip
                     Layout.fillWidth: true
-                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 14
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 24 : 14)
+                    Layout.minimumHeight: ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 18 : 10)
 
                     Rectangle {
                         anchors.fill: parent
