@@ -241,9 +241,9 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        // Left column (25%)
+        // Left column
         Rectangle {
-            Layout.preferredWidth: parent.width * 0.20
+            Layout.preferredWidth: parent.width * (ScreenTools.isMobile ? 0.32 : 0.20)
             Layout.fillHeight: true
             color: "#1a1a1a"
 
@@ -253,7 +253,8 @@ Item {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 389
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 14 : 22)
+                    Layout.minimumHeight: ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 10 : 12)
                     color: "transparent"
                     clip: true
 
@@ -285,6 +286,7 @@ Item {
                     id: quickParamsPanelLeft
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    Layout.minimumHeight: ScreenTools.defaultFontPixelHeight * 10
                     visible: true
                 }
 
