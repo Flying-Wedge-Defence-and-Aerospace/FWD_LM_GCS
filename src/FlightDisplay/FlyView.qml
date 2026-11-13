@@ -243,7 +243,7 @@ Item {
 
         // Left column
         Rectangle {
-            Layout.preferredWidth: parent.width * (ScreenTools.isMobile ? 0.32 : 0.20)
+            Layout.preferredWidth: parent.width * (ScreenTools.isMobile ? 0.20 : 0.20)
             Layout.fillHeight: true
             color: "#1a1a1a"
 
@@ -253,8 +253,8 @@ Item {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Math.min(fwdHudLoader.width * 389 / 359, ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 8 : 22))
-                    Layout.minimumHeight: Math.min(fwdHudLoader.width * 389 / 359, ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 8 : 22))
+                    Layout.preferredHeight: fwdHudLoader.width * 389 / 359
+                    Layout.minimumHeight: fwdHudLoader.width * 389 / 359
                     color: "transparent"
                     clip: true
 
@@ -264,10 +264,10 @@ Item {
                         anchors.margins: 2
                         source: "qrc:/qml/QGroundControl/FlightDisplay/FWDAttitudeHUD.qml"
                         transform: Scale {
-                            origin.x: fwdHudLoader.width / 2
-                            origin.y: fwdHudLoader.height / 2
-                            xScale: Math.min(fwdHudLoader.width / 359, fwdHudLoader.height / 389)
-                            yScale: Math.min(fwdHudLoader.width / 359, fwdHudLoader.height / 389)
+                            origin.x: 0
+                            origin.y: 0
+                            xScale: fwdHudLoader.width / 359
+                            yScale: fwdHudLoader.width / 359
                         }
                     }
 
