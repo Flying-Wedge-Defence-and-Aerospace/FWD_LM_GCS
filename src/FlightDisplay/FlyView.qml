@@ -253,8 +253,8 @@ Item {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 14 : 22)
-                    Layout.minimumHeight: ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 10 : 12)
+                    Layout.preferredHeight: fwdHudLoader.width * 389 / 359
+                    Layout.minimumHeight: fwdHudLoader.width * 389 / 359
                     color: "transparent"
                     clip: true
 
@@ -264,10 +264,10 @@ Item {
                         anchors.margins: 2
                         source: "qrc:/qml/QGroundControl/FlightDisplay/FWDAttitudeHUD.qml"
                         transform: Scale {
-                            origin.x: fwdHudLoader.width / 2
-                            origin.y: fwdHudLoader.height / 2
-                            xScale: Math.min(fwdHudLoader.width / 359, fwdHudLoader.height / 389)
-                            yScale: Math.min(fwdHudLoader.width / 359, fwdHudLoader.height / 389)
+                            origin.x: 0
+                            origin.y: 0
+                            xScale: fwdHudLoader.width / 359
+                            yScale: fwdHudLoader.width / 359
                         }
                     }
 
