@@ -283,7 +283,7 @@ Item {
     FlyViewToolStrip {
         id:                     toolStrip
         // Keep the tool strip to the right of the 20% HUD column.
-        anchors.leftMargin:     parent.width * 0.20 + _toolsMargin
+        anchors.leftMargin:     parent.width * (ScreenTools.isMobile ? 0.32 : 0.20) + _toolsMargin
         anchors.topMargin:      _toolsMargin
         anchors.left:           parent.left
         anchors.top:            parent.top
