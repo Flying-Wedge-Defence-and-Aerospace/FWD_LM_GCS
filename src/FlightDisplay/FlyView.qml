@@ -264,10 +264,10 @@ Item {
                         anchors.margins: 2
                         source: "qrc:/qml/QGroundControl/FlightDisplay/FWDAttitudeHUD.qml"
                         transform: Scale {
-                            origin.x: 0
-                            origin.y: 0
-                            xScale: fwdHudLoader.width / 359
-                            yScale: fwdHudLoader.width / 359
+                            origin.x: fwdHudLoader.width / 2
+                            origin.y: fwdHudLoader.height / 2
+                            xScale: Math.min(fwdHudLoader.width / 359, fwdHudLoader.height / 389)
+                            yScale: Math.min(fwdHudLoader.width / 359, fwdHudLoader.height / 389)
                         }
                     }
 
