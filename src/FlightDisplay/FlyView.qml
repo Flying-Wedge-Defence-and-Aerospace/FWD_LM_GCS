@@ -243,7 +243,7 @@ Item {
 
         // Left column
         Rectangle {
-            Layout.preferredWidth: parent.width * (ScreenTools.isMobile ? 0.25 : 0.20)
+            Layout.preferredWidth: parent.width * (ScreenTools.isMobile ? 0.22 : 0.20)
             Layout.fillHeight: true
             color: "#1a1a1a"
 
